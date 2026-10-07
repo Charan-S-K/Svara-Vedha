@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVARAABHAVA | Verify OTP</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            900: '#090b1e',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(4px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased bg-[#fbfcff] text-slate-900 h-screen overflow-hidden flex">
+
+    <!-- Left Brand & Vision Showcase Panel -->
+    <div class="hidden lg:flex lg:w-1/2 bg-[#090b1e] relative overflow-hidden flex-col justify-between p-12 xl:p-16 text-white select-none">
+        
+        <!-- Flowing Curved Wave Lines & Particle Canvas -->
+        <canvas id="slogan-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-[6]"></canvas>
+
+        <!-- Ambient Glowing Background Orbs & Flares -->
+        <!-- Top Left Indigo Flare -->
+        <div class="absolute -top-24 -left-20 w-[480px] h-[480px] bg-gradient-to-br from-indigo-500/25 via-purple-600/15 to-transparent rounded-full filter blur-[85px] pointer-events-none"></div>
+        
+        <!-- Bottom Left Magenta Flare -->
+        <div class="absolute -bottom-16 -left-16 w-[420px] h-[420px] bg-gradient-to-tr from-fuchsia-600/45 via-purple-600/25 to-transparent rounded-full filter blur-[80px] pointer-events-none"></div>
+        
+        <!-- Bottom Right Giant Glowing Violet/Blue Celestial Orb -->
+        <div class="absolute -bottom-28 -right-28 w-[560px] h-[560px] rounded-full bg-gradient-to-tl from-purple-600/80 via-indigo-600/55 to-blue-500/25 filter blur-[45px] pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-36 w-[640px] h-[640px] rounded-full bg-gradient-to-t from-violet-600/50 via-purple-700/30 to-indigo-950/10 pointer-events-none border border-violet-400/20 shadow-[inset_0_0_80px_rgba(168,85,247,0.25)]"></div>
+
+        <!-- Subtle Top-Right Dot Grid -->
+        <div class="absolute top-10 right-10 grid grid-cols-6 gap-3.5 opacity-30 pointer-events-none z-10" aria-hidden="true">
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+        </div>
+
+        <!-- Subtle Bottom-Left Dot Grid -->
+        <div class="absolute bottom-28 left-12 grid grid-cols-4 gap-3.5 opacity-30 pointer-events-none z-10" aria-hidden="true">
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+            <div class="w-1 h-1 rounded-full bg-indigo-200"></div>
+        </div>
+
+        <!-- Flowing Abstract Glowing Wave Curves -->
+        <svg class="absolute bottom-0 left-0 w-full h-[60%] pointer-events-none z-[5]" viewBox="0 0 700 450" fill="none" preserveAspectRatio="none">
+            <path d="M-40,360 C160,390 240,220 420,280 C540,320 620,200 740,160" stroke="url(#wave-grad-1)" stroke-width="1.8" opacity="0.65"/>
+            <path d="M-40,390 C140,360 280,270 450,320 C560,350 640,240 740,210" stroke="url(#wave-grad-2)" stroke-width="1.2" opacity="0.4"/>
+            <path d="M-40,320 C180,340 300,160 480,240 C580,280 650,170 740,130" stroke="url(#wave-grad-1)" stroke-width="0.8" opacity="0.3"/>
+            <defs>
+                <linearGradient id="wave-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.9"/>
+                    <stop offset="45%" stop-color="#818cf8" stop-opacity="0.6"/>
+                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.15"/>
+                </linearGradient>
+                <linearGradient id="wave-grad-2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.6"/>
+                    <stop offset="60%" stop-color="#6366f1" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1"/>
+                </linearGradient>
+            </defs>
+        </svg>
+
+        <!-- Official SVARAABHAVA Brand Logo Header (Top-Left) -->
+        <div class="relative z-10 flex items-center gap-3.5">
+            <img 
+                src="{% static 'images/logo-symbol.png' %}" 
+                onerror="this.onerror=null; this.src='../../static/images/logo-symbol.png'; if(!this.complete||this.naturalWidth===0){this.src='frontend/static/images/logo-symbol.png';}"
+                alt="SVARAABHAVA Logo Symbol" 
+                class="h-10 w-auto drop-shadow-[0_0_16px_rgba(45,212,191,0.4)] object-contain"
+            />
+            <span class="text-2xl xl:text-[1.75rem] font-extrabold tracking-[0.16em] text-white">
+                SVARAABHAVA
+            </span>
+        </div>
+        
+        <!-- Hero Slogan & Subtitle -->
+        <div class="relative z-10 my-auto py-8">
+            <div class="space-y-6 max-w-xl">
+                <!-- Dynamic Slogan Container with Floating Lines Synchronization -->
+                <div id="slogan-container" class="min-h-[175px] sm:min-h-[195px] lg:min-h-[220px] flex flex-col justify-center">
+                    <h1 id="slogan-heading" class="font-extrabold leading-[1.12] tracking-tight text-white transition-all duration-700 ease-out text-4xl sm:text-5xl lg:text-[3.5rem]" style="opacity: 1; transform: translateY(0); filter: blur(0px);">
+                        <span id="slogan-line-1" class="block">Speech is a</span>
+                        <span id="slogan-line-2" class="block bg-gradient-to-r from-[#2dd4bf] via-[#818cf8] to-[#c084fc] bg-clip-text text-transparent drop-shadow-[0_0_28px_rgba(45,212,191,0.35)]">
+                            mirror of emotion.
+                        </span>
+                    </h1>
+                </div>
+                <p class="text-slate-300/85 text-base sm:text-lg leading-relaxed max-w-lg font-normal">
+                    Experience seamless authentication with our advanced infrastructure. Powered by industry-leading security protocols.
+                </p>
+            </div>
+        </div>
+
+        <!-- Left Footer -->
+        <div class="relative z-10 flex items-center gap-4 text-xs sm:text-sm text-slate-400/80 font-medium">
+            <span>&copy; 2026 SVARAABHAVA</span>
+            <span>&bull;</span>
+            <a href="#" class="hover:text-white transition-colors">Privacy</a>
+            <span>&bull;</span>
+            <a href="#" class="hover:text-white transition-colors">Terms</a>
+        </div>
+    </div>
+
+    <!-- Right Interaction Panel (Clean White / Light Lavender Background) -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto bg-gradient-to-br from-white via-[#faf9fe] to-[#f4f2fb]">
+        
+        <div class="w-full max-w-md relative my-auto py-6 sm:py-8">
+
+            <!-- Mobile Brand Bar (Visible only on small viewports) -->
+            <div class="lg:hidden flex items-center gap-3 mb-6 pb-4 border-b border-slate-200/60">
+                <img 
+                    src="{% static 'images/logo-symbol.png' %}" 
+                    onerror="this.onerror=null; this.src='../../static/images/logo-symbol.png'; if(!this.complete||this.naturalWidth===0){this.src='frontend/static/images/logo-symbol.png';}"
+                    alt="SVARAABHAVA Logo Symbol" 
+                    class="h-8 w-auto drop-shadow-[0_0_12px_rgba(45,212,191,0.3)] object-contain"
+                />
+                <span class="text-xl font-extrabold tracking-[0.14em] text-slate-900">
+                    SVARAABHAVA
+                </span>
+            </div>
+
+            <!-- Back to Register Link -->
+            <a href="{% url 'register' %}" class="mb-8 inline-flex items-center text-sm font-semibold text-slate-500 hover:text-purple-600 transition-colors group cursor-pointer">
+                <i class="ph ph-arrow-left mr-2 text-lg group-hover:-translate-x-0.5 transition-transform"></i> Back to register
+            </a>
+
+            <!-- Header -->
+            <div class="mb-8">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Verify your identity</h2>
+                <p class="text-slate-500 mt-2 text-sm sm:text-base leading-relaxed">
+                    Enter the 6-digit verification code sent to your registered email address.
+                </p>
+            </div>
+
+            <!-- Django Backend Messages (e.g. Invalid or expired OTP) -->
+            {% if messages %}
+                <div class="mb-5 space-y-2 animate-fade-in">
+                    {% for message in messages %}
+                        <div class="p-3.5 bg-red-50/90 border border-red-200/90 rounded-xl text-red-600 text-xs sm:text-sm flex items-center gap-2.5">
+                            <i class="ph ph-warning-circle text-lg flex-shrink-0 text-red-500"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Client-side Error Banner -->
+            <div id="otp-error-banner" class="hidden mb-5 p-3.5 bg-red-50/90 border border-red-200/90 rounded-xl text-red-600 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in">
+                <i class="ph ph-warning-circle text-lg flex-shrink-0 text-red-500"></i>
+                <span id="otp-error-text"></span>
+            </div>
+
+            <!-- OTP Verification Form posting to Django {% url 'verify_otp' %} -->
+            <form id="otp-form" class="space-y-6" method="post" action="{% url 'verify_otp' %}" onsubmit="return handleVerifyOTP(event)">
+                {% csrf_token %}
+
+                <div>
+                    <label for="otp-input" class="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">Security Code</label>
+                    <!-- Single Large Centered 6-digit OTP Box -->
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="otp-input" 
+                            name="otp"
+                            inputmode="numeric" 
+                            pattern="[0-9]*" 
+                            maxlength="6" 
+                            autocomplete="one-time-code"
+                            class="block w-full text-center py-3.5 px-4 text-2xl sm:text-3xl font-bold tracking-[0.45em] sm:tracking-[0.65em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base placeholder:font-normal border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all bg-white shadow-sm hover:border-slate-300 font-mono" 
+                            placeholder="Enter 6-digit OTP" 
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6); clearOTPError();"
+                            required
+                            autofocus
+                        />
+                    </div>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="verify-submit-btn" 
+                    class="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-purple-600/20 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all transform active:scale-[0.99] cursor-pointer"
+                >
+                    <span>Verify &amp; Create Account</span>
+                    <i class="ph ph-check ml-2 text-lg"></i>
+                </button>
+            </form>
+
+            <div class="text-center mt-6">
+                <p class="text-sm text-slate-500">
+                    Didn't receive the code? 
+                    <a href="{% url 'resend' %}" class="font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer ml-1">
+                        Resend OTP
+                    </a>
+                </p>
+            </div>
+
+            <!-- Sign in Link -->
+            <div class="mt-6 pt-6 border-t border-slate-200/60 text-center">
+                <p class="text-sm text-slate-500">
+                    Already verified your account? 
+                    <a href="{% url 'login' %}" class="font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer ml-1">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripting for Interaction & Dynamic Simulation -->
+    <script>
+        // OTP Error Banner Helpers
+        function showOTPError(message) {
+            const banner = document.getElementById('otp-error-banner');
+            const errorText = document.getElementById('otp-error-text');
+            const otpInput = document.getElementById('otp-input');
+            if (banner && errorText) {
+                errorText.textContent = message;
+                banner.classList.remove('hidden');
+            }
+            if (otpInput) {
+                otpInput.classList.add('!border-red-400', '!focus:ring-red-400/20', '!focus:border-red-500');
+                otpInput.focus();
+            }
+        }
+
+        function clearOTPError() {
+            const banner = document.getElementById('otp-error-banner');
+            const otpInput = document.getElementById('otp-input');
+            if (banner) {
+                banner.classList.add('hidden');
+            }
+            if (otpInput) {
+                otpInput.classList.remove('!border-red-400', '!focus:ring-red-400/20', '!focus:border-red-500');
+            }
+        }
+
+        // Form Submit Handler (Client-side validation for Django POST submission)
+        function handleVerifyOTP(e) {
+            clearOTPError();
+
+            const otpInput = document.getElementById('otp-input');
+            const otpValue = otpInput ? otpInput.value.trim() : '';
+
+            // Strict 6-digit numeric validation
+            if (!otpValue || otpValue.length !== 6 || !/^\d{6}$/.test(otpValue)) {
+                showOTPError('Please enter a valid 6-digit numeric OTP code.');
+                if (e) e.preventDefault();
+                return false;
+            }
+
+            // Client validation succeeded — allow normal Django POST form submission
+            return true;
+        }
+
+        /* ==========================================================================
+           SVARAABHAVA — FLOATING 3D CURVED LINE & SLOGAN SEQUENCE ANIMATION
+           ========================================================================== */
+        (function() {
+            const canvas = document.getElementById('slogan-wave-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const headingEl = document.getElementById('slogan-heading');
+            const line1El = document.getElementById('slogan-line-1');
+            const line2El = document.getElementById('slogan-line-2');
+
+            // 4 Sequential Slogans
+            const slogans = [
+                {
+                    line1: "Speech is a",
+                    line2: "mirror of emotion.",
+                    sizeClass: "text-4xl sm:text-5xl lg:text-[3.5rem]",
+                    holdTime: 3000,
+                    glowClass: "from-[#2dd4bf] via-[#818cf8] to-[#c084fc]",
+                    dropShadow: "drop-shadow-[0_0_28px_rgba(45,212,191,0.35)]",
+                    waveMode: "normal"
+                },
+                {
+                    line1: "The voice",
+                    line2: "reveals emotions.",
+                    sizeClass: "text-4xl sm:text-5xl lg:text-[3.5rem]",
+                    holdTime: 3000,
+                    glowClass: "from-[#38bdf8] via-[#818cf8] to-[#c084fc]",
+                    dropShadow: "drop-shadow-[0_0_28px_rgba(56,189,248,0.4)]",
+                    waveMode: "intertwined"
+                },
+                {
+                    line1: "The feelings of the mind",
+                    line2: "are reflected in the voice.",
+                    sizeClass: "text-3xl sm:text-4xl lg:text-[2.65rem]",
+                    holdTime: 4000,
+                    glowClass: "from-[#2dd4bf] via-[#60a5fa] to-[#c084fc]",
+                    dropShadow: "drop-shadow-[0_0_32px_rgba(129,140,248,0.45)]",
+                    waveMode: "expanded"
+                },
+                {
+                    line1: "Speech is the",
+                    line2: "mirror of emotion.",
+                    sizeClass: "text-4xl sm:text-5xl lg:text-[3.5rem]",
+                    holdTime: 4000,
+                    glowClass: "from-[#2dd4bf] via-[#a855f7] to-[#38bdf8]",
+                    dropShadow: "drop-shadow-[0_0_38px_rgba(45,212,191,0.6)]",
+                    waveMode: "converged"
+                }
+            ];
+
+            let sloganIndex = 0;
+            let currentSloganState = 'holding';
+            let stateStartTime = performance.now();
+            let width = 0;
+            let height = 0;
+            let dpr = 1;
+
+            // Handle Resize & Retina DPI
+            function resize() {
+                const parent = canvas.parentElement;
+                if (!parent) return;
+                const rect = parent.getBoundingClientRect();
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                width = rect.width;
+                height = rect.height;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Floating Waves Configuration (6 dynamic harmonic 3D layers)
+            const waveLayers = [
+                {
+                    baseYRel: 0.62,
+                    speed: 0.00075,
+                    freq: 0.0035,
+                    amp: 36,
+                    color1: 'rgba(45, 212, 191, 0.75)',
+                    color2: 'rgba(56, 189, 248, 0.65)',
+                    shadow: '#2dd4bf',
+                    shadowBlur: 16,
+                    lineWidth: 2.2,
+                    phase: 0.0
+                },
+                {
+                    baseYRel: 0.58,
+                    speed: -0.00065,
+                    freq: 0.0042,
+                    amp: 42,
+                    color1: 'rgba(129, 140, 248, 0.70)',
+                    color2: 'rgba(192, 132, 252, 0.65)',
+                    shadow: '#818cf8',
+                    shadowBlur: 18,
+                    lineWidth: 1.8,
+                    phase: 1.4
+                },
+                {
+                    baseYRel: 0.68,
+                    speed: 0.0009,
+                    freq: 0.0028,
+                    amp: 48,
+                    color1: 'rgba(56, 189, 248, 0.55)',
+                    color2: 'rgba(45, 212, 191, 0.50)',
+                    shadow: '#38bdf8',
+                    shadowBlur: 14,
+                    lineWidth: 1.5,
+                    phase: 2.8
+                },
+                {
+                    baseYRel: 0.52,
+                    speed: -0.0008,
+                    freq: 0.0050,
+                    amp: 28,
+                    color1: 'rgba(192, 132, 252, 0.65)',
+                    color2: 'rgba(99, 102, 241, 0.50)',
+                    shadow: '#c084fc',
+                    shadowBlur: 15,
+                    lineWidth: 1.2,
+                    phase: 3.9
+                },
+                {
+                    baseYRel: 0.72,
+                    speed: 0.0006,
+                    freq: 0.0030,
+                    amp: 54,
+                    color1: 'rgba(99, 102, 241, 0.40)',
+                    color2: 'rgba(56, 189, 248, 0.40)',
+                    shadow: '#6366f1',
+                    shadowBlur: 12,
+                    lineWidth: 1.0,
+                    phase: 4.7
+                },
+                {
+                    baseYRel: 0.48,
+                    speed: 0.0011,
+                    freq: 0.0062,
+                    amp: 22,
+                    color1: 'rgba(45, 212, 191, 0.50)',
+                    color2: 'rgba(192, 132, 252, 0.45)',
+                    shadow: '#2dd4bf',
+                    shadowBlur: 10,
+                    lineWidth: 1.4,
+                    phase: 5.5
+                }
+            ];
+
+            function getWaveY(layer, x, time, mode) {
+                let baseY = height * layer.baseYRel;
+                let amp = layer.amp;
+                let freq = layer.freq;
+
+                if (mode === 'intertwined') {
+                    amp *= 1.15;
+                    return baseY + Math.sin(x * freq + time * layer.speed + layer.phase) * amp 
+                                 + Math.sin(x * freq * 2.2 - time * layer.speed * 1.4) * (amp * 0.45);
+                } else if (mode === 'expanded') {
+                    amp *= 1.35;
+                    baseY += (layer.baseYRel - 0.6) * 60;
+                    return baseY + Math.sin(x * (freq * 0.85) + time * layer.speed + layer.phase) * amp
+                                 + Math.cos(x * 0.002 + time * 0.0005) * 18;
+                } else if (mode === 'converged') {
+                    baseY = height * 0.56 + (layer.baseYRel - 0.58) * 35;
+                    amp *= 0.9;
+                    return baseY + Math.sin(x * freq + time * layer.speed * 1.2 + layer.phase) * amp
+                                 + Math.sin(x * 0.008 + time * 0.0012) * 12;
+                }
+                
+                return baseY + Math.sin(x * freq + time * layer.speed + layer.phase) * amp
+                             + Math.cos(x * freq * 0.6 - time * layer.speed * 0.7) * (amp * 0.35);
+            }
+
+            const waveParticles = [];
+            for (let i = 0; i < 48; i++) {
+                waveParticles.push({
+                    layerIndex: i % waveLayers.length,
+                    x: Math.random() * 1200,
+                    speed: 0.6 + Math.random() * 1.4,
+                    size: 1.4 + Math.random() * 2.2,
+                    alpha: 0.4 + Math.random() * 0.5,
+                    pulse: Math.random() * Math.PI * 2
+                });
+            }
+
+            const ambientDust = [];
+            for (let i = 0; i < 35; i++) {
+                ambientDust.push({
+                    x: Math.random() * 1200,
+                    y: Math.random() * 800,
+                    vx: (Math.random() - 0.5) * 0.25,
+                    vy: (Math.random() - 0.5) * 0.2,
+                    size: 1.0 + Math.random() * 2.0,
+                    baseAlpha: 0.15 + Math.random() * 0.35,
+                    pulseSpeed: 0.002 + Math.random() * 0.003,
+                    color: Math.random() > 0.5 ? '#2dd4bf' : '#818cf8'
+                });
+            }
+
+            let transitionParticles = [];
+
+            function spawnAssembleParticles() {
+                transitionParticles = [];
+                const rect = headingEl.getBoundingClientRect();
+                const parentRect = canvas.parentElement.getBoundingClientRect();
+                const targetCenterX = (rect.left - parentRect.left) + rect.width * 0.45;
+                const targetCenterY = (rect.top - parentRect.top) + rect.height * 0.5;
+
+                for (let i = 0; i < 75; i++) {
+                    const layerIdx = i % waveLayers.length;
+                    const spawnX = Math.random() > 0.5 ? Math.random() * width * 0.3 : width * 0.7 + Math.random() * width * 0.3;
+                    const spawnY = getWaveY(waveLayers[layerIdx], spawnX, performance.now(), slogans[sloganIndex].waveMode) + (Math.random() - 0.5) * 40;
+                    
+                    const destX = targetCenterX + (Math.random() - 0.5) * rect.width * 0.8;
+                    const destY = targetCenterY + (Math.random() - 0.5) * rect.height * 0.7;
+
+                    transitionParticles.push({
+                        type: 'assemble',
+                        x: spawnX,
+                        y: spawnY,
+                        destX: destX,
+                        destY: destY,
+                        progress: 0,
+                        speed: 0.016 + Math.random() * 0.018,
+                        size: 1.6 + Math.random() * 2.5,
+                        color: ['#2dd4bf', '#38bdf8', '#818cf8', '#c084fc'][Math.floor(Math.random() * 4)],
+                        life: 1.0
+                    });
+                }
+            }
+
+            function spawnDissolveParticles() {
+                transitionParticles = [];
+                const rect = headingEl.getBoundingClientRect();
+                const parentRect = canvas.parentElement.getBoundingClientRect();
+                const startX = (rect.left - parentRect.left);
+                const startY = (rect.top - parentRect.top);
+
+                for (let i = 0; i < 90; i++) {
+                    const pX = startX + Math.random() * rect.width;
+                    const pY = startY + Math.random() * rect.height;
+                    const angle = (Math.random() * 0.8 - 0.4) + (Math.random() > 0.4 ? 0 : Math.PI);
+                    const speed = 1.2 + Math.random() * 3.5;
+                    const layerIdx = i % waveLayers.length;
+
+                    transitionParticles.push({
+                        type: 'dissolve',
+                        x: pX,
+                        y: pY,
+                        vx: Math.cos(angle) * speed + 0.8,
+                        vy: Math.sin(angle) * speed * 0.6,
+                        layerIdx: layerIdx,
+                        size: 1.8 + Math.random() * 2.8,
+                        color: ['#ffffff', '#2dd4bf', '#38bdf8', '#c084fc', '#818cf8'][Math.floor(Math.random() * 5)],
+                        alpha: 1.0,
+                        decay: 0.012 + Math.random() * 0.015
+                    });
+                }
+            }
+
+            function updateSloganState(now) {
+                const elapsed = now - stateStartTime;
+                const cur = slogans[sloganIndex];
+
+                if (currentSloganState === 'holding') {
+                    if (elapsed >= cur.holdTime) {
+                        currentSloganState = 'dissolving';
+                        stateStartTime = now;
+                        spawnDissolveParticles();
+
+                        headingEl.style.opacity = '0';
+                        headingEl.style.transform = 'translateY(-10px) scale(0.97)';
+                        headingEl.style.filter = 'blur(6px)';
+                    }
+                } else if (currentSloganState === 'dissolving') {
+                    if (elapsed >= 850) {
+                        currentSloganState = 'gap';
+                        stateStartTime = now;
+                        sloganIndex = (sloganIndex + 1) % slogans.length;
+                    }
+                } else if (currentSloganState === 'gap') {
+                    if (elapsed >= 500) {
+                        const nextSlogan = slogans[sloganIndex];
+                        line1El.textContent = nextSlogan.line1;
+                        line2El.textContent = nextSlogan.line2;
+
+                        headingEl.className = `font-extrabold leading-[1.12] tracking-tight text-white transition-all duration-700 ease-out ${nextSlogan.sizeClass}`;
+                        line2El.className = `block bg-gradient-to-r ${nextSlogan.glowClass} bg-clip-text text-transparent ${nextSlogan.dropShadow}`;
+
+                        headingEl.style.opacity = '0';
+                        headingEl.style.transform = 'translateY(12px) scale(0.96)';
+                        headingEl.style.filter = 'blur(6px)';
+
+                        spawnAssembleParticles();
+                        currentSloganState = 'converging';
+                        stateStartTime = now;
+                    }
+                } else if (currentSloganState === 'converging') {
+                    if (elapsed >= 150) {
+                        headingEl.style.opacity = '1';
+                        headingEl.style.transform = 'translateY(0) scale(1)';
+                        headingEl.style.filter = 'blur(0px)';
+                    }
+                    if (elapsed >= 800) {
+                        currentSloganState = 'holding';
+                        stateStartTime = now;
+                    }
+                }
+            }
+
+            function animate(time) {
+                ctx.clearRect(0, 0, width, height);
+
+                const currentMode = slogans[sloganIndex].waveMode;
+                updateSloganState(time);
+
+                for (let i = 0; i < waveLayers.length; i++) {
+                    const layer = waveLayers[i];
+                    ctx.save();
+                    ctx.beginPath();
+
+                    const step = 8;
+                    const firstY = getWaveY(layer, 0, time, currentMode);
+                    ctx.moveTo(0, firstY);
+
+                    for (let x = step; x <= width + step; x += step) {
+                        const y = getWaveY(layer, x, time, currentMode);
+                        ctx.lineTo(x, y);
+                    }
+
+                    const grad = ctx.createLinearGradient(0, 0, width, 0);
+                    grad.addColorStop(0, layer.color1);
+                    grad.addColorStop(0.5, layer.color2);
+                    grad.addColorStop(1, layer.color1);
+
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = layer.lineWidth;
+                    ctx.lineCap = 'round';
+                    ctx.shadowColor = layer.shadow;
+                    ctx.shadowBlur = (currentMode === 'converged') ? layer.shadowBlur * 1.5 : layer.shadowBlur;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                for (let i = 0; i < waveParticles.length; i++) {
+                    const p = waveParticles[i];
+                    p.x += p.speed;
+                    if (p.x > width + 20) p.x = -20;
+
+                    const layer = waveLayers[p.layerIndex];
+                    const py = getWaveY(layer, p.x, time, currentMode);
+                    p.pulse += 0.04;
+                    const curSize = p.size * (0.85 + Math.sin(p.pulse) * 0.25);
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(p.x, py, curSize, 0, Math.PI * 2);
+                    ctx.fillStyle = layer.shadow;
+                    ctx.shadowColor = layer.shadow;
+                    ctx.shadowBlur = 10;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                for (let i = 0; i < ambientDust.length; i++) {
+                    const d = ambientDust[i];
+                    d.x += d.vx;
+                    d.y += d.vy;
+                    if (d.x < 0) d.x = width;
+                    if (d.x > width) d.x = 0;
+                    if (d.y < 0) d.y = height;
+                    if (d.y > height) d.y = 0;
+
+                    const alpha = d.baseAlpha + Math.sin(time * d.pulseSpeed) * 0.15;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+                    ctx.fillStyle = d.color;
+                    ctx.globalAlpha = Math.max(0.05, Math.min(alpha, 0.8));
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                for (let i = transitionParticles.length - 1; i >= 0; i--) {
+                    const tp = transitionParticles[i];
+                    if (tp.type === 'assemble') {
+                        tp.progress += tp.speed;
+                        const ease = 1 - Math.pow(1 - tp.progress, 3);
+                        const curX = tp.x + (tp.destX - tp.x) * ease;
+                        const curY = tp.y + (tp.destY - tp.y) * ease;
+                        tp.life = Math.max(0, 1 - tp.progress);
+
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(curX, curY, tp.size * (1 - ease * 0.5), 0, Math.PI * 2);
+                        ctx.fillStyle = tp.color;
+                        ctx.shadowColor = tp.color;
+                        ctx.shadowBlur = 12;
+                        ctx.globalAlpha = tp.life;
+                        ctx.fill();
+                        ctx.restore();
+
+                        if (tp.progress >= 1) {
+                            transitionParticles.splice(i, 1);
+                        }
+                    } else if (tp.type === 'dissolve') {
+                        tp.x += tp.vx;
+                        tp.y += tp.vy;
+                        const waveY = getWaveY(waveLayers[tp.layerIdx], tp.x, time, currentMode);
+                        tp.y += (waveY - tp.y) * 0.04;
+
+                        tp.alpha -= tp.decay;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(tp.x, tp.y, tp.size, 0, Math.PI * 2);
+                        ctx.fillStyle = tp.color;
+                        ctx.shadowColor = tp.color;
+                        ctx.shadowBlur = 14;
+                        ctx.globalAlpha = Math.max(0, tp.alpha);
+                        ctx.fill();
+                        ctx.restore();
+
+                        if (tp.alpha <= 0) {
+                            transitionParticles.splice(i, 1);
+                        }
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+        })();
+    </script>
+</body>
+</html>
