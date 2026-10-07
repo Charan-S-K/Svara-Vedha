@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     {% load static %}
+    {% load socialaccount %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVARAABHAVA | Speech is the Mirror of Emotion</title>
@@ -296,9 +297,10 @@
                     </div>
 
                     <div class="mt-6 grid grid-cols-2 gap-3">
-                        <button type="button" class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                            <i class="ph-fill ph-google-logo text-xl mr-2 text-red-500"></i> Google
-                        </button>
+                        <a href="{% provider_login_url 'google' %}"
+   class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+    <i class="ph-fill ph-google-logo text-xl mr-2 text-red-500"></i> Google
+</a>
                         <button type="button" onclick="switchView('view-forgot')" class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-purple-200 rounded-xl shadow-sm bg-purple-50/70 text-sm font-medium text-purple-700 hover:bg-purple-100/80 transition-colors cursor-pointer">
                             <i class="ph ph-sparkle text-xl mr-2 text-purple-600"></i> Magic Link
                         </button>
