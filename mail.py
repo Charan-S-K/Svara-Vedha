@@ -406,4 +406,4 @@ def send_mail(to):
     return otp
 
 if __name__=='__main__':
-    send_mail('www.c.tej2000@gmail.com')
+    send_mail('')
