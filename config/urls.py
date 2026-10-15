@@ -31,5 +31,6 @@ path("accounts/", include("allauth.urls")),
         "",
         include("accounts.urls")
     ),
+    path("dashboard/",include("home.urls")),
 
 ]

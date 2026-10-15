@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVARAABHAVA | Speech Emotion AI Dashboard</title>
+    
+    <!-- Fonts matching login & register (Inter, Outfit, Fira Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons (matching login & register) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            900: '#090b1e',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(4px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Glassmorphic dashboard cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 16px 36px -12px rgba(99, 102, 241, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        html.dark .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            border-color: rgba(51, 65, 85, 0.7);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            color: #f8fafc;
+        }
+
+        /* Hover lift on primary cards */
+        .hover-lift-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 24px 45px -12px rgba(99, 102, 241, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+        }
+        html.dark .hover-lift-box:hover {
+            box-shadow: 0 24px 45px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        /* ================= LEFT VERTICAL DOCK ANIMATIONS ================= */
+        @keyframes navDockFloat {
+            0%, 100% {
+                transform: translateY(0px);
+                box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.12), inset 0 0 0 1.5px rgba(255, 255, 255, 0.95);
+            }
+            50% {
+                transform: translateY(-5px);
+                box-shadow: 0 18px 32px -8px rgba(99, 102, 241, 0.22), inset 0 0 0 1.5px rgba(255, 255, 255, 1);
+            }
+        }
+        .animate-dock-levitate {
+            animation: navDockFloat 4.8s ease-in-out infinite;
+        }
+
+        @keyframes dockBorderGlow {
+            0%, 100% { border-color: rgba(226, 232, 240, 0.9); }
+            50% { border-color: rgba(199, 210, 254, 0.85); }
+        }
+        .dock-glass {
+            animation: dockBorderGlow 4s ease-in-out infinite;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        html.dark .dock-glass {
+            background: rgba(15, 23, 42, 0.88);
+            border-color: rgba(51, 65, 85, 0.8);
+        }
+
+        @keyframes activeAura {
+            0%, 100% {
+                box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.55), 0 0 0 0 rgba(129, 140, 248, 0.4);
+            }
+            50% {
+                box-shadow: 0 6px 22px -1px rgba(99, 102, 241, 0.75), 0 0 0 5px rgba(129, 140, 248, 0);
+            }
+        }
+        .active-nav-pill {
+            animation: activeAura 2.4s ease-in-out infinite;
+        }
+
+        @keyframes botHeadBob {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-1.5px) rotate(-4deg); }
+            75% { transform: translateY(0.5px) rotate(4deg); }
+        }
+        .animate-bot-bob {
+            animation: botHeadBob 3.2s ease-in-out infinite;
+        }
+
+        .icon-sun:hover {
+            transform: rotate(90deg) scale(1.15);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .icon-moon:hover {
+            transform: rotate(-25deg) scale(1.18);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ================= NAVIGATION ICON TOOLTIPS ================= */
+        .nav-btn {
+            position: relative;
+        }
+        .nav-tooltip {
+            position: absolute;
+            left: calc(100% + 14px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-8px) scale(0.92);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 9999;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 6px 12px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12);
+        }
+        html.dark .nav-tooltip {
+            background: #f8fafc;
+            color: #0f172a;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.2);
+        }
+        /* Triangle indicator pointing left */
+        .nav-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent #0f172a transparent transparent;
+        }
+        html.dark .nav-tooltip::before {
+            border-color: transparent #f8fafc transparent transparent;
+        }
+        .nav-btn:hover .nav-tooltip,
+        .nav-btn:focus-within .nav-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(0px) scale(1);
+        }
+
+        /* ================= VOICE IMPORTANCE TEXT MASKING ================= */
+        /* ================= VOICE IMPORTANCE TEXT MASKING ================= */
+        .welcome-image-masked-text {
+            background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(109, 40, 217, 0.88) 45%, rgba(13, 148, 136, 0.92) 100%), var(--active-voice-bg);
+            background-blend-mode: overlay;
+            background-size: cover;
+            background-position: center;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 10px rgba(99, 102, 241, 0.2));
+            transition: all 0.8s ease-in-out;
+        }
+        html.dark .welcome-image-masked-text {
+            background-image: linear-gradient(135deg, #ffffff 0%, #c4b5fd 40%, #2dd4bf 85%), var(--active-voice-bg);
+            background-blend-mode: overlay;
+            -webkit-text-stroke: 0.35px rgba(255, 255, 255, 0.45);
+            filter: drop-shadow(0 0 16px rgba(129, 140, 248, 0.65)) drop-shadow(0 2px 28px rgba(168, 85, 247, 0.5));
+        }
+
+        /* ================= FILE DROPPING INSIDE THE BOX ANIMATION ================= */
+        @keyframes fileDropIntoBox {
+            0% {
+                transform: translateY(-38px) scale(0.9) rotate(-5deg);
+                opacity: 0;
+            }
+            18% {
+                transform: translateY(-26px) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            52% {
+                transform: translateY(-14px) scale(0.96) rotate(1deg);
+                opacity: 1;
+            }
+            72% {
+                transform: translateY(6px) scale(0.72) rotate(-2deg);
+                opacity: 0.85;
+            }
+            86% {
+                transform: translateY(22px) scale(0.4) rotate(0deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(26px) scale(0.3);
+                opacity: 0;
+            }
+        }
+        .file-drop-anim {
+            animation: fileDropIntoBox 2.8s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+        }
+        .dropzone-box:hover .file-drop-anim,
+        .dropzone-box.dragover .file-drop-anim {
+            animation-duration: 1.4s;
+        }
+
+        /* Box receiving bounce when file drops in */
+        @keyframes boxReceiveBounce {
+            0%, 55% {
+                transform: scale(1) translateY(0);
+            }
+            74% {
+                transform: scale(1.08, 0.92) translateY(3px);
+                box-shadow: 0 12px 28px -4px rgba(124, 58, 237, 0.35);
+            }
+            84% {
+                transform: scale(0.97, 1.03) translateY(-1px);
+            }
+            100% {
+                transform: scale(1) translateY(0);
+            }
+        }
+        .box-receiver {
+            animation: boxReceiveBounce 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        }
+        .dropzone-box:hover .box-receiver,
+        .dropzone-box.dragover .box-receiver {
+            animation-duration: 1.4s;
+        }
+
+        /* Slot opening glow flash when file drops */
+        @keyframes boxSlotPulse {
+            0%, 55% {
+                opacity: 0.35;
+                transform: scaleX(0.85);
+                box-shadow: 0 0 4px rgba(168, 85, 247, 0.4);
+            }
+            74% {
+                opacity: 1;
+                transform: scaleX(1.2);
+                box-shadow: 0 0 16px rgba(168, 85, 247, 0.95), 0 0 8px rgba(45, 212, 191, 0.8);
+            }
+            90%, 100% {
+                opacity: 0.35;
+                transform: scaleX(0.85);
+            }
+        }
+        .box-slot-glow {
+            animation: boxSlotPulse 2.8s ease-in-out infinite;
+        }
+        .dropzone-box:hover .box-slot-glow,
+        .dropzone-box.dragover .box-slot-glow {
+            animation-duration: 1.4s;
+        }
+
+        /* Marching Dashed Border Animation */
+        @keyframes marchingDash {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -48; }
+        }
+        .running-border-path {
+            stroke-dasharray: 8 6;
+            animation: marchingDash 1.8s linear infinite;
+        }
+        .dropzone-box:hover .running-border-path,
+        .dropzone-box.dragover .running-border-path {
+            animation-duration: 0.8s;
+            stroke: #7c3aed;
+        }
+
+        /* Concentric Radar shockwave rings */
+        @keyframes radarWave {
+            0% { transform: scale(0.85); opacity: 0.9; }
+            50% { opacity: 0.45; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .radar-ring-1 {
+            animation: radarWave 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        }
+        .radar-ring-2 {
+            animation: radarWave 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.8s;
+        }
+
+        /* Running Equalizer Bars */
+        @keyframes eqBarPulse {
+            0%, 100% { height: 6px; }
+            50% { height: 24px; }
+        }
+        .eq-bar {
+            animation: eqBarPulse 1.2s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+
+        /* Sweeping light beam */
+        @keyframes beamSweep {
+            0% { transform: translateX(-150%) skewX(-20deg); }
+            100% { transform: translateX(250%) skewX(-20deg); }
+        }
+        .animate-light-beam {
+            animation: beamSweep 4.2s ease-in-out infinite;
+        }
+
+        /* Running Audio Spectrum Waveform in Card 2 */
+        @keyframes waveBarBounce {
+            0%, 100% { transform: scaleY(0.25); }
+            50% { transform: scaleY(1); }
+        }
+        .audio-spectrum-bar {
+            animation: waveBarBounce 1.1s ease-in-out infinite alternate;
+            transform-origin: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#fbfcff] dark:bg-[#090b1e] text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased overflow-x-hidden selection:bg-purple-500 selection:text-white transition-colors duration-300">
+
+    <!-- Ambient Glowing Background Orbs & Flares (Matching login/register brand showcase) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Top Left Indigo Flare -->
+        <div class="absolute -top-24 -left-20 w-[520px] h-[520px] bg-gradient-to-br from-indigo-500/15 via-purple-600/10 to-transparent dark:from-indigo-600/25 dark:via-purple-700/15 rounded-full filter blur-[95px]"></div>
+        <!-- Top Right Teal/Cyan Flare -->
+        <div class="absolute top-10 -right-24 w-[480px] h-[480px] bg-gradient-to-bl from-teal-400/15 via-cyan-500/10 to-transparent dark:from-teal-500/20 dark:via-cyan-600/10 rounded-full filter blur-[90px]"></div>
+        <!-- Bottom Left Magenta Flare -->
+        <div class="absolute -bottom-24 left-1/4 w-[420px] h-[420px] bg-gradient-to-tr from-fuchsia-600/10 via-purple-600/5 to-transparent dark:from-fuchsia-600/20 dark:via-purple-600/10 rounded-full filter blur-[85px]"></div>
+    </div>
+
+    <!-- ==================== TOP FULL-WIDTH HEADER ==================== -->
+    <header class="w-full bg-white/85 dark:bg-[#090b1e]/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            
+            <!-- Left: Official SVARAABHAVA Brand Logo & Typography (Exact match with login/register) -->
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-3.5 group cursor-pointer">
+                <!-- Exact SV Logo Symbol with Teal/Cyan Accent -->
+                <img 
+                    id="brandLogoImg"
+                    src="{% static 'images/logo-symbol.png' %}" 
+                    onerror="handleLogoFallback(this)"
+                    alt="SVARAABHAVA Logo Symbol" 
+                    class="h-9 w-auto drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] object-contain transition-transform group-hover:scale-105"
+                />
+                <div class="flex flex-col">
+                    <span class="text-xl sm:text-2xl font-extrabold tracking-[0.16em] text-slate-900 dark:text-white leading-none">
+                        SVARAABHAVA
+                    </span>
+                    <span class="text-[10px] font-semibold tracking-widest text-slate-400 dark:text-slate-500 uppercase mt-1">
+                        Speech Emotion AI
+                    </span>
+                </div>
+            </a>
+
+            <!-- Right Header Actions (Notifications, Theme indicator, User Profile Pill) -->
+            <div class="flex items-center gap-3 sm:gap-4">
+                
+                <!-- Notification Bell with Purple Indicator -->
+                <button onclick="showToast('No new stress anomalies detected today!')" class="relative p-2.5 rounded-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-all cursor-pointer" title="Notifications">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-600 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse"></span>
+                </button>
+
+                <!-- User Profile Dropdown Container -->
+                <div class="relative" id="profileDropdownContainer">
+                    
+                    <!-- User Profile Pill Trigger Button -->
+                    <button id="profileDropdownTrigger" onclick="toggleProfileDropdown(event)" class="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-slate-100/90 hover:bg-slate-200/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 via-indigo-600 to-teal-400 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                            <span class="user-avatar-initial">{% if request.user.is_authenticated %}{{ request.user.first_name|first|default:request.user.username|first|upper }}{% else %}U{% endif %}</span>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="font-semibold text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-tight user-display-name">
+                                {% if request.user.is_authenticated %}{{ request.user.first_name|default:request.user.username }}{% else %}Username{% endif %}
+                            </span>
+                            <span class="text-[9px] text-brand-600 dark:text-brand-500 font-bold tracking-wider uppercase">Pro Tier</span>
+                        </div>
+                        <i data-lucide="chevron-down" id="profileChevron" class="w-4 h-4 text-slate-400 ml-0.5 transition-transform duration-200"></i>
+                    </button>
+
+                    <!-- Interactive Profile Dropdown Menu Box -->
+                    <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2.5 w-64 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/90 dark:border-slate-700/90 shadow-2xl z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
+                        
+                        <!-- Header: User Identity Info -->
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 via-indigo-600 to-teal-400 text-white font-bold text-sm flex items-center justify-center shadow-md shadow-brand-500/20 flex-shrink-0">
+                                    <span class="user-avatar-initial">{% if request.user.is_authenticated %}{{ request.user.first_name|first|default:request.user.username|first|upper }}{% else %}U{% endif %}</span>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <p class="font-bold text-sm text-slate-900 dark:text-white truncate user-display-name">
+                                        {% if request.user.is_authenticated %}{{ request.user.first_name|default:request.user.username }}{% else %}Username{% endif %}
+                                    </p>
+                                    <p class="text-xs text-slate-400 dark:text-slate-400 truncate user-email-text">
+                                        {% if request.user.is_authenticated and request.user.email %}{{ request.user.email }}{% else %}alex@svaraabhava.ai{% endif %}
+                                    </p>
+                                    <span class="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Session
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Menu Action Items: Profile, Settings, Logout -->
+                        <div class="p-2 space-y-1">
+                            <!-- 1. Profile -->
+                            
+<a href="{% url 'profile' %}"
+   class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors group cursor-pointer text-left">
+
+    <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 group-hover:text-brand-600 dark:group-hover:text-brand-400 flex items-center justify-center transition-colors">
+        <i data-lucide="user" class="w-4 h-4"></i>
+    </div>
+
+    <div class="flex flex-col">
+        <span>Profile</span>
+        <span class="text-[10px] text-slate-400 dark:text-slate-400 font-normal">Account &amp; voice profile</span>
+    </div>
+</a>
+
+
+                            <!-- 2. Settings -->
+                            <button onclick="handleProfileNav('settings')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors group cursor-pointer text-left">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 group-hover:text-brand-600 dark:group-hover:text-brand-400 flex items-center justify-center transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span>Settings</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-normal">Preferences & audio engine</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="h-px bg-slate-100 dark:bg-slate-800/80 my-0.5"></div>
+
+                        <!-- 3. Logout -->
+                        
+<!-- 3. Logout -->
+<form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors group cursor-pointer text-left"
+    >
+        <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50 flex items-center justify-center transition-colors">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+        </div>
+
+        <div class="flex flex-col">
+            <span>Log Out</span>
+            <span class="text-[10px] text-rose-400/80 dark:text-rose-400/60 font-normal">
+                End current session
+            </span>
+        </div>
+    </button>
+</form>
+
+</div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN FULL-WIDTH WEBSITE CONTENT ==================== -->
+    <!-- ==================== LEFT VERTICAL DOCK / NAVBAR (FIXED ON LEFT, IN BETWEEN TWO CORNERS) ==================== -->
+    <aside class="w-full md:w-auto flex md:flex-col items-center justify-center z-20 md:fixed md:left-5 lg:md:left-7 md:top-1/2 md:-translate-y-1/2 mb-6 md:mb-0 px-4 md:px-0">
+        <nav id="navDock" class="dock-glass animate-dock-levitate bg-white/90 dark:bg-slate-900/90 p-2 sm:p-2.5 rounded-2xl md:rounded-[26px] border border-slate-200/80 dark:border-slate-700/80 flex md:flex-col items-center gap-2.5 sm:gap-3.5 shadow-xl w-full md:w-16 justify-around md:justify-start">
+
+            <!-- 1. HOME ICON (Default Active with breathing neon aura) -->
+            <div class="relative nav-btn group">
+                <button onclick="setActiveNav(this, 'Home')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center active-nav-pill transition-all transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Home">
+                    <i data-lucide="home" class="w-5 h-5 transition-transform duration-300 group-hover:-translate-y-0.5"></i>
+                </button>
+                <!-- Active indicator dot -->
+                <span class="active-dot absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-600 hidden md:block"></span>
+                <!-- Floating Tooltip showing icon name -->
+                <div class="nav-tooltip">
+                    Home
+                </div>
+            </div>
+
+            <!-- 2. AI-BOT ICON (Animated Nodding Head + Radar Beacon) -->
+            <div class="relative nav-btn group">
+                <button onclick="openAiBotDrawer()" class="nav-item-btn relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-md group-hover:shadow-brand-500/20 active:scale-95 border border-slate-200/60 dark:border-slate-700 cursor-pointer" aria-label="AI Voice Coach">
+                    <div class="animate-bot-bob">
+                        <i data-lucide="bot" class="w-5 h-5 text-brand-600 dark:text-brand-400"></i>
+                    </div>
+                    <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                </button>
+                <div class="nav-tooltip flex items-center gap-1.5">
+                    <span>AI Voice Coach</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                </div>
+            </div>
+
+            <!-- 3. INFO ICON -->
+            <div class="relative nav-btn group">
+                <button onclick="openSystemDiagnostics()" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-6 active:scale-95 cursor-pointer" aria-label="Diagnostics & Specs">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </button>
+                <div class="nav-tooltip">
+                    Diagnostics & Specs
+                </div>
+            </div>
+
+            <!-- 4. APPS / GRID ICON -->
+            <div class="relative nav-btn group">
+                <button onclick="setActiveNav(this, 'Apps & Integrations')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-6 active:scale-95 cursor-pointer" aria-label="Workspace Apps">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </button>
+                <div class="nav-tooltip">
+                    Workspace Apps
+                </div>
+            </div>
+
+            <!-- 5. SEARCH ICON -->
+            <div class="relative nav-btn group">
+                <button onclick="setActiveNav(this, 'Voice Archive Search')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Search Recordings">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <div class="nav-tooltip">
+                    Voice Search
+                </div>
+            </div>
+
+            <!-- Separator Line -->
+            <div class="w-6 h-px md:w-8 md:h-px bg-slate-200/80 dark:bg-slate-700 my-0.5"></div>
+
+            <!-- 6. SUN (LIGHT MODE) ICON (Rotating micro-interaction) -->
+            <div class="relative nav-btn group">
+                <button onclick="switchTheme('light')" class="icon-sun nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800 flex items-center justify-center transition-all active:scale-95 cursor-pointer" aria-label="Light Theme">
+                    <i data-lucide="sun" class="w-5 h-5"></i>
+                </button>
+                <div class="nav-tooltip">
+                    Light Theme
+                </div>
+            </div>
+
+            <!-- 7. MOON (DARK MODE) ICON (Tilting micro-interaction) -->
+            <div class="relative nav-btn group">
+                <button onclick="switchTheme('dark')" class="icon-moon nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-slate-800 flex items-center justify-center transition-all active:scale-95 cursor-pointer" aria-label="Dark Theme">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                </button>
+                <div class="nav-tooltip">
+                    Dark Theme
+                </div>
+            </div>
+
+        </nav>
+    </aside>
+
+    <!-- ==================== MAIN CENTERED WEBSITE WORKSPACE ==================== -->
+    <main class="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 flex flex-col justify-center items-center relative z-10">
+
+        <!-- ==================== VOICE IMPORTANCE SHOWCASE HERO WITH MASKED TEXT ==================== -->
+        <div id="voiceHeroShowcase" class="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden p-7 sm:p-9 mb-8 sm:mb-10 border border-slate-200/80 dark:border-slate-800/90 shadow-xl transition-all duration-500 bg-white/75 dark:bg-slate-900/85 backdrop-blur-xl group">
+            
+            <!-- Changing Voice Importance Background Visual (Cross-fading with Ken Burns subtle motion) -->
+            <div id="heroBgImage" class="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105 opacity-25 dark:opacity-35 pointer-events-none"></div>
+            
+            <!-- Subtle Frosted Gradient Scrim & Vignette for Supreme Readability -->
+            <div class="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/90 dark:from-[#090b1e]/70 dark:via-transparent dark:to-[#090b1e]/90 pointer-events-none"></div>
+
+            <!-- Hero Content Container -->
+            <div class="relative z-10 flex flex-col items-center text-center space-y-3.5 max-w-2xl mx-auto">
+                
+                <!-- Dynamic Voice Importance Insight Pill Badge -->
+                <div id="voiceInsightBadge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-slate-800/95 text-brand-700 dark:text-brand-300 text-xs font-semibold border border-brand-200/80 dark:border-brand-800/80 shadow-xs backdrop-blur-md transition-all duration-500">
+                    <span class="w-2 h-2 rounded-full bg-brand-500 animate-ping"></span>
+                    <span id="voiceInsightIcon" class="text-sm">🎙️</span>
+                    <span id="voiceInsightText" class="tracking-tight">Acoustic Vocal Resonance • 84% of emotional intent is carried by pitch contour</span>
+                </div>
+
+                <!-- WELCOME TEXT MASKED ON CHANGING VOICE IMPORTANCE IMAGES -->
+                <h1 id="welcomeMaskedHeading" class="welcome-image-masked-text font-heading font-black text-3xl sm:text-4xl lg:text-[2.75rem] tracking-tight leading-tight select-none">
+                    WELCOME TO SVARAABHAVA, <span class="welcome-user-name">{% if request.user.is_authenticated %}{{ request.user.first_name|default:request.user.username }}{% else %}Username{% endif %}!</span>
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium max-w-lg">
+                    Analyze speech in real-time for emotional tone, vocal tension, jitter, and acoustic biomarkers.
+                </p>
+
+                <!-- Voice Importance Interactive Slide Indicators -->
+                <div class="flex items-center gap-2 pt-1.5">
+                    <button onclick="setVoiceSlide(0)" class="voice-slide-dot w-7 h-1.5 rounded-full bg-brand-600 dark:bg-brand-400 transition-all cursor-pointer" title="Vocal Resonance"></button>
+                    <button onclick="setVoiceSlide(1)" class="voice-slide-dot w-2 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-brand-400 transition-all cursor-pointer" title="Acoustic Biomarkers"></button>
+                    <button onclick="setVoiceSlide(2)" class="voice-slide-dot w-2 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-brand-400 transition-all cursor-pointer" title="Harmonic Formants"></button>
+                    <button onclick="setVoiceSlide(3)" class="voice-slide-dot w-2 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-brand-400 transition-all cursor-pointer" title="Emotional Mirror"></button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TWO CORE FEATURE CARDS (PERFECTLY BALANCED & ALIGNED) -->
+        <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mx-auto">
+
+            <!-- ==================== CARD 1: UPLOAD AUDIO (FILE DROPPING INTO BOX ANIMATION) ==================== -->
+            <div class="hover-lift-box glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between group">
+                
+                <!-- Card Title & Purple Cloud Icon -->
+                <div class="text-center space-y-1.5 mb-5">
+                    <div class="w-14 h-14 mx-auto rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-100 dark:border-brand-800 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                        <i data-lucide="cloud-upload" class="w-7 h-7"></i>
+                    </div>
+                    <h2 class="font-heading font-bold text-xl text-slate-900 dark:text-white pt-1">Upload Audio</h2>
+                    <p class="text-xs text-slate-400 dark:text-slate-400">Choose an audio file from your device</p>
+                </div>
+
+                <!-- ANIMATED AUDIO DROP ZONE WITH FILE-DROPPING-INTO-BOX ANIMATION (NO BOUNCING BARS) -->
+                <div id="dropzoneBox" onclick="document.getElementById('audioFileInput').click()" class="dropzone-box relative rounded-2xl p-6 sm:p-8 text-center cursor-pointer overflow-hidden transition-all duration-300 bg-brand-50/20 dark:bg-brand-950/20 hover:bg-brand-50/40 dark:hover:bg-brand-950/30 border border-transparent">
+                    
+                    <!-- Hidden native file input -->
+                    <input type="file" id="audioFileInput" class="hidden" accept=".wav,.mp3,.m4a,audio/*" onchange="handleAudioUpload(event)">
+
+                    <!-- SVG Animated Marching-Dash Border -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none rounded-2xl" preserveAspectRatio="none">
+                        <rect x="2" y="2" width="98.5%" height="97%" rx="16" ry="16" fill="none" stroke="#a78bfa" stroke-width="2" class="running-border-path"></rect>
+                    </svg>
+
+                    <!-- Sweeping Light Beam Effect -->
+                    <div class="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent pointer-events-none animate-light-beam"></div>
+
+                    <!-- ==================== ANIMATION: FILE DROPPING INSIDE THE RECEIVING BOX ==================== -->
+                    <div class="relative w-28 h-24 mx-auto mb-4 flex items-center justify-center">
+                        
+                        <!-- Radar Expanding Shockwaves -->
+                        <div class="absolute inset-0 rounded-2xl bg-brand-400/20 radar-ring-1 pointer-events-none"></div>
+                        <div class="absolute inset-0 rounded-2xl bg-indigo-400/15 radar-ring-2 pointer-events-none"></div>
+
+                        <!-- Floating Dropping File Document with Sound Waves -->
+                        <div class="file-drop-anim absolute z-20 flex flex-col items-center pointer-events-none">
+                            <div class="w-9 h-11 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-lg flex flex-col items-center justify-center relative border border-white/50">
+                                <!-- Corner Fold Accent -->
+                                <div class="absolute top-0 right-0 w-2.5 h-2.5 bg-white/35 rounded-bl-sm"></div>
+                                <i data-lucide="file-audio" class="w-4 h-4 text-white"></i>
+                                <div class="flex gap-0.5 mt-0.5">
+                                    <span class="w-0.5 h-1.5 bg-white/80 rounded-full"></span>
+                                    <span class="w-0.5 h-2.5 bg-white rounded-full"></span>
+                                    <span class="w-0.5 h-1 bg-white/80 rounded-full"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Receiving 3D Box Receiver with Glowing Target Slot -->
+                        <div class="box-receiver relative z-10 w-16 h-12 rounded-2xl bg-gradient-to-b from-brand-100 to-indigo-100 dark:from-brand-900/60 dark:to-indigo-950/60 border-2 border-brand-400/70 dark:border-brand-500/60 flex flex-col items-center justify-end pb-1.5 shadow-md shadow-brand-500/15">
+                            <!-- Glowing Slot Flash -->
+                            <div class="box-slot-glow w-10 h-1.5 rounded-full bg-brand-500/80 mb-1"></div>
+                            <i data-lucide="inbox" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
+                        </div>
+
+                    </div>
+
+                    <!-- Drop Instructions -->
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        Drag &amp; drop an audio file here
+                    </p>
+                    <p class="text-xs text-slate-400 dark:text-slate-400 mt-0.5">or click to browse</p>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Supports: WAV, MP3, M4A (Max 10 MB)</p>
+
+                    <!-- Selected File Feedback -->
+                    <div id="fileUploadFeedback" class="mt-3 py-1.5 px-3 rounded-lg bg-brand-100/90 dark:bg-brand-900/50 text-xs font-semibold text-brand-700 dark:text-brand-300 hidden inline-flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span id="fileUploadFeedbackText"></span>
+                    </div>
+                </div>
+
+                <!-- Purple Choose File Button + Instant Analyze Action -->
+                <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                    <button onclick="document.getElementById('audioFileInput').click()" class="w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-500/25 hover:shadow-lg hover:shadow-brand-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        <span>Choose File</span>
+                    </button>
+                    
+                    <button id="btnRunUploadAnalysis" onclick="runAnalysisForCurrentAudio()" class="hidden py-3 px-4 rounded-xl bg-slate-900 dark:bg-brand-600 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                        <span>Analyze</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== CARD 2: AUDIO RECORDING (CLEAN PLAYER & CONTROLS) ==================== -->
+            <div class="hover-lift-box glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between group">
+                
+                <!-- Card Title & Cyan Microphone Icon -->
+                <div class="text-center space-y-1.5 mb-5">
+                    <div class="w-14 h-14 mx-auto rounded-2xl bg-teal-50 dark:bg-teal-950/30 text-teal-500 flex items-center justify-center border border-teal-100 dark:border-teal-900/40 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                        <i data-lucide="mic" class="w-7 h-7"></i>
+                    </div>
+                    <h2 class="font-heading font-bold text-xl text-slate-900 dark:text-white pt-1">Audio Recording</h2>
+                    <p class="text-xs text-slate-400 dark:text-slate-400">Record your voice directly</p>
+                </div>
+
+                <!-- INTEGRATED AUDIO PLAYER & RECORDING STATUS CONTAINER (MATCHING DROPZONE) -->
+                <div class="rounded-2xl p-6 sm:p-7 bg-teal-50/20 dark:bg-teal-950/15 border border-slate-200/60 dark:border-slate-800 flex flex-col justify-center space-y-5">
+                    
+                    <!-- Clean Minimalist Audio Player Bar -->
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-xs">
+                        <!-- Play/Pause Button -->
+                        <button id="playerPlayBtn" onclick="togglePlayPreview()" class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex-shrink-0 cursor-pointer">
+                            <i data-lucide="play" id="playerPlayIcon" class="w-4 h-4 ml-0.5"></i>
+                        </button>
+
+                        <!-- Timer Indicator -->
+                        <span id="playerTimer" class="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300 flex-shrink-0">
+                            0:00 / 0:00
+                        </span>
+
+                        <!-- Audio Scrubber / Track Bar -->
+                        <div class="flex-1 relative flex items-center group/scrubber cursor-pointer py-1" onclick="scrubAudio(event)">
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div id="playerProgressBar" class="bg-teal-500 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                            <div id="playerKnob" class="absolute left-0 w-3 h-3 bg-white border-2 border-teal-500 rounded-full shadow-sm -ml-1 opacity-0 group-hover/scrubber:opacity-100 transition-opacity pointer-events-none"></div>
+                        </div>
+
+                        <!-- Volume Icon -->
+                        <button onclick="toggleMute()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer" title="Mute/Unmute">
+                            <i data-lucide="volume-2" id="volumeIcon" class="w-4 h-4"></i>
+                        </button>
+
+                        <!-- Options 3 Dots -->
+                        <button onclick="openSystemDiagnostics()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer" title="Diagnostics & Specs">
+                            <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Live Status Pill -->
+                    <div class="flex items-center justify-between text-xs px-1">
+                        <span id="recordingStatusBadge" class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                            <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                            <span id="statusIndicatorText">Microphone ready</span>
+                        </span>
+                        <span id="liveTimerDisplay" class="font-mono text-teal-600 dark:text-teal-400 font-bold hidden">REC 00:00</span>
+                    </div>
+                </div>
+
+                <!-- Teal Start Recording Button -->
+                <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                    <button id="btnRecordingToggle" onclick="toggleLiveRecording()" class="w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-teal-400 via-cyan-500 to-teal-400 text-white text-xs sm:text-sm font-bold shadow-md shadow-cyan-500/25 hover:shadow-lg hover:shadow-cyan-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="mic" id="recBtnIcon" class="w-4 h-4"></i>
+                        <span id="recBtnLabel">Start Recording</span>
+                    </button>
+                    
+                    <button id="btnRunRecordAnalysis" onclick="runAnalysisForCurrentAudio()" class="hidden py-3 px-4 rounded-xl bg-slate-900 dark:bg-teal-600 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                        <span>Analyze</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="w-full border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-[#090b1e]/60 py-4 px-4 sm:px-8 text-center text-xs text-slate-400 dark:text-slate-500 relative z-10 transition-colors">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>SVARAABHAVA • Speech Emotion AI Platform</span>
+            <span>Enterprise Acoustic Diagnostics • &copy; 2026</span>
+        </div>
+    </footer>
+
+    <!-- ==================== AI BOT DRAWER ==================== -->
+    <div id="aiBotDrawer" class="fixed inset-y-0 right-0 w-80 sm:w-96 bg-white dark:bg-slate-900 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 border-l border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">SVARA Coach AI</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Voice Strain Assistant
+                    </p>
+                </div>
+            </div>
+            <button onclick="closeAiBotDrawer()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div id="botChatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+            <div class="flex gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                    AI
+                </div>
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-none text-slate-800 dark:text-slate-200 leading-relaxed shadow-xs">
+                    Hello! I'm your SVARAABHAVA Voice Health Assistant. Upload or record an audio sample to inspect vocal cord tension, pitch jitter, and acoustic stress markers.
+                </div>
+            </div>
+        </div>
+
+        <div class="px-3 py-2 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto text-[11px]">
+            <button onclick="sendQuickPrompt('How do I reduce voice fatigue?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-brand-500 cursor-pointer transition-colors">
+                Reduce fatigue?
+            </button>
+            <button onclick="sendQuickPrompt('What is voice tremor jitter?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-brand-500 cursor-pointer transition-colors">
+                What is jitter?
+            </button>
+            <button onclick="sendQuickPrompt('Tips for warm-up exercises')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-brand-500 cursor-pointer transition-colors">
+                Warm-up tips
+            </button>
+        </div>
+
+        <div class="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <form onsubmit="handleBotSubmit(event)" class="flex gap-2">
+                <input id="botChatInput" type="text" placeholder="Ask about vocal fatigue, pitch..." class="flex-1 text-xs border border-slate-200 dark:border-slate-700 bg-transparent rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100">
+                <button type="submit" class="px-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl flex items-center justify-center transition-colors cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== STRESS ANALYSIS RESULT MODAL ==================== -->
+    <div id="analysisModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-slide-up">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-heading font-bold text-lg text-slate-900 dark:text-white">Acoustic Biomarker Report</h3>
+                        <p class="text-[11px] text-slate-400">SVARAABHAVA Deep Voice Stress Engine</p>
+                    </div>
+                </div>
+                <button onclick="closeAnalysisModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-brand-50/70 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/60 border border-brand-100/60 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-semibold text-brand-700 dark:text-brand-300 uppercase tracking-wider">Overall Vocal Strain</span>
+                    <h4 class="font-heading font-extrabold text-2xl text-slate-900 dark:text-white mt-0.5">21% • Low Stress</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Normal vocal folds phonation. No chronic strain markers.</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-base shadow-sm">
+                    ✓ Normal
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Fundamental (F0)</span>
+                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">134.2 Hz</div>
+                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Stable Pitch</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Jitter (Microtremor)</span>
+                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">0.42 %</div>
+                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">&lt; 1.0% Optimal</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Shimmer (Amplitude)</span>
+                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">1.85 %</div>
+                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Healthy Glottal Wave</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Harmonics-to-Noise</span>
+                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">22.6 dB</div>
+                    <span class="text-[10px] text-brand-600 dark:text-brand-400">Clean Resonance</span>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                <span>Vocal cords show healthy acoustic resonance. Maintain hydration and periodic vocal rests during long speaking sessions.</span>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeAnalysisModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs transition-colors cursor-pointer">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SYSTEM DIAGNOSTICS MODAL ==================== -->
+    <div id="diagnosticsModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-slide-up">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-5 h-5 text-brand-600"></i>
+                    <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">System Diagnostics</h3>
+                </div>
+                <button onclick="closeDiagnosticsModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2.5 text-xs">
+                <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-slate-400">Core Neural Engine:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">SVARA-AcousticNet v3.4</span>
+                </div>
+                <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-slate-400">Sample Rate:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">44.1 kHz / 16-bit PCM</span>
+                </div>
+                <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-slate-400">Latency:</span>
+                    <span class="font-semibold text-emerald-600">&lt; 14 ms (Real-Time)</span>
+                </div>
+                <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-slate-400">Biomarkers Evaluated:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">F0, Jitter, Shimmer, HNR, Cepstral Peak</span>
+                </div>
+                <div class="flex justify-between py-1.5">
+                    <span class="text-slate-400">Engine Health:</span>
+                    <span class="font-bold text-emerald-500">100% OPERATIONAL</span>
+                </div>
+            </div>
+
+            <button onclick="closeDiagnosticsModal()" class="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer">
+                Close Diagnostics
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification element -->
+    <div id="toastBox" class="fixed bottom-6 right-6 z-50 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 transform translate-y-24 opacity-0 transition-all duration-300">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toastMessage">Action completed</span>
+    </div>
+
+    <!-- ==================== INTERACTIVE SCRIPTS ==================== -->
+    <script>
+        let isRecordingActive = false;
+        let recordingTimer = 0;
+        let recInterval = null;
+        let isAudioPlaying = false;
+        let playTimerInterval = null;
+        let playProgress = 0;
+        let mediaRecorder = null;
+        let recordedAudioChunks = [];
+        let currentAudioElement = new Audio();
+        let isMuted = false;
+        let currentLoadedAudioUrl = null;
+
+        function showProfileToast() {
+            const nameEl = document.querySelector('.user-display-name');
+            const name = nameEl ? nameEl.innerText.trim() : 'Username';
+            showToast(`Profile: ${name} (Acoustic Pro Active)`);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Standalone preview fallback: clean unparsed template tags if opened without Django server
+            document.body.childNodes.forEach(n => {
+                if (n.nodeType === 3 && n.textContent && (n.textContent.includes('{%') || n.textContent.includes('{{'))) {
+                    n.textContent = '';
+                }
+            });
+            const sanitize = (selector, fallback) => {
+                document.querySelectorAll(selector).forEach(el => {
+                    if (el.textContent.includes('{%') || el.textContent.includes('{{')) {
+                        el.textContent = fallback;
+                    }
+                });
+            };
+            sanitize('.user-avatar-initial', 'U');
+            sanitize('.user-display-name', 'Username');
+            sanitize('.welcome-user-name', 'Username!');
+
+            lucide.createIcons();
+            setupDropzone();
+            
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+
+            // Audio element listeners
+            currentAudioElement.addEventListener('timeupdate', () => {
+                if (!currentAudioElement.duration) return;
+                const current = currentAudioElement.currentTime;
+                const total = currentAudioElement.duration;
+                playProgress = (current / total) * 100;
+                
+                document.getElementById('playerProgressBar').style.width = `${playProgress}%`;
+                const knob = document.getElementById('playerKnob');
+                if (knob) knob.style.left = `${playProgress}%`;
+                
+                document.getElementById('playerTimer').innerText = 
+                    `${formatTime(Math.floor(current))} / ${formatTime(Math.floor(total))}`;
+            });
+
+            currentAudioElement.addEventListener('ended', () => {
+                isAudioPlaying = false;
+                const icon = document.getElementById('playerPlayIcon');
+                icon.setAttribute('data-lucide', 'play');
+                lucide.createIcons();
+                document.getElementById('playerProgressBar').style.width = '0%';
+            });
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        /* ================= NAVBAR DOCK INTERACTION ================= */
+        function setActiveNav(btnElement, navName) {
+            document.querySelectorAll('.nav-item-btn').forEach(btn => {
+                btn.classList.remove('bg-gradient-to-tr', 'from-brand-600', 'to-indigo-600', 'text-white', 'active-nav-pill');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.querySelectorAll('.active-dot').forEach(dot => dot.remove());
+
+            btnElement.classList.remove('text-slate-400');
+            btnElement.classList.add('bg-gradient-to-tr', 'from-brand-600', 'to-indigo-600', 'text-white', 'active-nav-pill');
+
+            const dot = document.createElement('span');
+            dot.className = 'active-dot absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-600 hidden md:block';
+            btnElement.parentElement.appendChild(dot);
+
+            showToast(`Navigated to: ${navName}`);
+        }
+
+        function switchTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                showToast("Dark mode activated");
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                showToast("Light mode activated");
+            }
+        }
+
+        /* ================= AI BOT DRAWER ================= */
+        function openAiBotDrawer() {
+            document.getElementById('aiBotDrawer').classList.remove('translate-x-full');
+        }
+
+        function closeAiBotDrawer() {
+            document.getElementById('aiBotDrawer').classList.add('translate-x-full');
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('botChatInput').value = promptText;
+            handleBotSubmit(new Event('submit'));
+        }
+
+        function handleBotSubmit(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const input = document.getElementById('botChatInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const container = document.getElementById('botChatMessages');
+            
+            const userBubble = document.createElement('div');
+            userBubble.className = "flex gap-2 justify-end";
+            userBubble.innerHTML = `
+                <div class="p-3 bg-brand-600 rounded-2xl rounded-tr-none text-white max-w-[85%] leading-relaxed shadow-xs">
+                    ${escapeHtml(val)}
+                </div>
+            `;
+            container.appendChild(userBubble);
+            input.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            setTimeout(() => {
+                let reply = "I've analyzed your acoustic query. Remember to maintain deep diaphragmatic breath support to prevent laryngeal hyperfunction and vocal fold micro-trauma!";
+                const lower = val.toLowerCase();
+                if (lower.includes('fatigue') || lower.includes('strain') || lower.includes('tired')) {
+                    reply = "To prevent vocal fatigue: 1) Practice the 20-20 rule (rest voice 20 sec every 20 min of speech), 2) Drink room temperature water with lemon, 3) Perform gentle lip trills to reset muscle tension.";
+                } else if (lower.includes('jitter') || lower.includes('tremor') || lower.includes('pitch')) {
+                    reply = "Vocal jitter measures cycle-to-cycle frequency variations. An elevated jitter (>1.0%) indicates stress-induced micro-tremors in your thyroarytenoid muscles.";
+                } else if (lower.includes('exercise') || lower.includes('warm')) {
+                    reply = "Recommended 3-step warm-up: 1) Straw phonation (gentle humming through a straw), 2) Pitch glides from low to high register, 3) Open vowel resonance drills (Ah, Oh, Ee).";
+                }
+
+                const botBubble = document.createElement('div');
+                botBubble.className = "flex gap-2.5";
+                botBubble.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                        AI
+                    </div>
+                    <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-none text-slate-800 dark:text-slate-200 leading-relaxed shadow-xs">
+                        ${reply}
+                    </div>
+                `;
+                container.appendChild(botBubble);
+                container.scrollTop = container.scrollHeight;
+            }, 500);
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        /* ================= DRAG AND DROP & UPLOAD ================= */
+        function setupDropzone() {
+            const dropzone = document.getElementById('dropzoneBox');
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+
+        function handleAudioUpload(e) {
+            if (e.target.files && e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            const feedback = document.getElementById('fileUploadFeedback');
+            const feedbackText = document.getElementById('fileUploadFeedbackText');
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            
+            feedbackText.innerText = `${file.name} (${sizeMB} MB)`;
+            feedback.classList.remove('hidden');
+
+            if (currentLoadedAudioUrl) {
+                URL.revokeObjectURL(currentLoadedAudioUrl);
+            }
+            currentLoadedAudioUrl = URL.createObjectURL(file);
+            currentAudioElement.src = currentLoadedAudioUrl;
+            currentAudioElement.load();
+            
+            currentAudioElement.onloadedmetadata = () => {
+                const dur = Math.floor(currentAudioElement.duration || 0);
+                document.getElementById('playerTimer').innerText = `0:00 / ${formatTime(dur)}`;
+            };
+
+            document.getElementById('btnRunUploadAnalysis').classList.remove('hidden');
+            document.getElementById('recordingStatusBadge').innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                <span class="text-brand-700 dark:text-brand-300 font-semibold truncate max-w-[140px]">${file.name} loaded</span>
+            `;
+
+            showToast(`Loaded "${file.name}" ready to analyze!`);
+        }
+
+        /* ================= LIVE RECORDING CONTROLS ================= */
+        async function toggleLiveRecording() {
+            if (!isRecordingActive) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            isRecordingActive = true;
+            recordingTimer = 0;
+            recordedAudioChunks = [];
+            
+            const btn = document.getElementById('btnRecordingToggle');
+            const label = document.getElementById('recBtnLabel');
+            const icon = document.getElementById('recBtnIcon');
+            const dot = document.getElementById('statusIndicatorDot');
+            const text = document.getElementById('statusIndicatorText');
+            const timerDisplay = document.getElementById('liveTimerDisplay');
+
+            btn.className = "w-full sm:w-56 py-3 px-5 rounded-xl bg-rose-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-rose-500/25 hover:shadow-lg hover:shadow-rose-500/35 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer";
+            label.innerText = "Stop Recording";
+            icon.setAttribute('data-lucide', 'square');
+            
+            dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
+            text.innerText = "Recording voice audio...";
+            timerDisplay.classList.remove('hidden');
+
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) recordedAudioChunks.push(e.data);
+                    };
+                    mediaRecorder.start();
+                }
+            } catch (err) {
+                console.warn("Microphone access fallback:", err);
+            }
+
+            recInterval = setInterval(() => {
+                recordingTimer++;
+                const formatted = formatTime(recordingTimer);
+                timerDisplay.innerText = `REC ${formatted}`;
+                document.getElementById('playerTimer').innerText = `${formatted} / ${formatted}`;
+            }, 1000);
+
+            lucide.createIcons();
+            showToast("Recording started. Speak naturally.");
+        }
+
+        function stopRecording() {
+            isRecordingActive = false;
+            clearInterval(recInterval);
+
+            const btn = document.getElementById('btnRecordingToggle');
+            const label = document.getElementById('recBtnLabel');
+            const icon = document.getElementById('recBtnIcon');
+            const dot = document.getElementById('statusIndicatorDot');
+            const text = document.getElementById('statusIndicatorText');
+            const timerDisplay = document.getElementById('liveTimerDisplay');
+
+            btn.className = "w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-teal-400 via-cyan-500 to-teal-400 text-white text-xs sm:text-sm font-bold shadow-md shadow-cyan-500/25 hover:shadow-lg hover:shadow-cyan-500/35 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer";
+            label.innerText = "Start Recording";
+            icon.setAttribute('data-lucide', 'mic');
+
+            dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+            text.innerText = "Audio captured ready for analysis";
+            timerDisplay.classList.add('hidden');
+
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(recordedAudioChunks, { type: 'audio/webm' });
+                    if (currentLoadedAudioUrl) URL.revokeObjectURL(currentLoadedAudioUrl);
+                    currentLoadedAudioUrl = URL.createObjectURL(audioBlob);
+                    currentAudioElement.src = currentLoadedAudioUrl;
+                    currentAudioElement.load();
+                };
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            } else {
+                document.getElementById('playerTimer').innerText = `0:00 / ${formatTime(recordingTimer)}`;
+            }
+
+            document.getElementById('btnRunRecordAnalysis').classList.remove('hidden');
+
+            lucide.createIcons();
+            showToast("Recording saved. Analyzing voice metrics...");
+        }
+
+        /* ================= AUDIO PLAYER CONTROLS ================= */
+        function togglePlayPreview() {
+            const playIcon = document.getElementById('playerPlayIcon');
+            const progressBar = document.getElementById('playerProgressBar');
+
+            if (currentAudioElement.src && currentAudioElement.duration) {
+                if (currentAudioElement.paused) {
+                    currentAudioElement.play();
+                    playIcon.setAttribute('data-lucide', 'pause');
+                    showToast("Playing voice audio preview...");
+                } else {
+                    currentAudioElement.pause();
+                    playIcon.setAttribute('data-lucide', 'play');
+                    showToast("Playback paused");
+                }
+                lucide.createIcons();
+                return;
+            }
+
+            isAudioPlaying = !isAudioPlaying;
+            if (isAudioPlaying) {
+                playIcon.setAttribute('data-lucide', 'pause');
+                showToast("Playing voice audio sample...");
+                
+                playTimerInterval = setInterval(() => {
+                    playProgress += 5;
+                    if (playProgress > 100) {
+                        playProgress = 0;
+                        isAudioPlaying = false;
+                        clearInterval(playTimerInterval);
+                        playIcon.setAttribute('data-lucide', 'play');
+                        lucide.createIcons();
+                    }
+                    progressBar.style.width = `${playProgress}%`;
+                    const knob = document.getElementById('playerKnob');
+                    if (knob) knob.style.left = `${playProgress}%`;
+                }, 250);
+            } else {
+                clearInterval(playTimerInterval);
+                playIcon.setAttribute('data-lucide', 'play');
+                showToast("Playback paused");
+            }
+            lucide.createIcons();
+        }
+
+        function scrubAudio(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            playProgress = Math.max(0, Math.min(100, (clickX / width) * 100));
+            
+            document.getElementById('playerProgressBar').style.width = `${playProgress}%`;
+            const knob = document.getElementById('playerKnob');
+            if (knob) knob.style.left = `${playProgress}%`;
+
+            if (currentAudioElement.src && currentAudioElement.duration) {
+                currentAudioElement.currentTime = (playProgress / 100) * currentAudioElement.duration;
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            currentAudioElement.muted = isMuted;
+            const icon = document.getElementById('volumeIcon');
+            if (isMuted) {
+                icon.setAttribute('data-lucide', 'volume-x');
+                showToast("Audio muted");
+            } else {
+                icon.setAttribute('data-lucide', 'volume-2');
+                showToast("Volume unmuted (100%)");
+            }
+            lucide.createIcons();
+        }
+
+        /* ================= MODAL & DIAGNOSTICS ================= */
+        function runAnalysisForCurrentAudio() {
+            showToast("Calculating jitter, shimmer & vocal tension...");
+            setTimeout(() => {
+                document.getElementById('analysisModal').classList.remove('hidden');
+                document.getElementById('analysisModal').classList.add('flex');
+            }, 700);
+        }
+
+        function closeAnalysisModal() {
+            document.getElementById('analysisModal').classList.add('hidden');
+            document.getElementById('analysisModal').classList.remove('flex');
+            showToast("Report saved to voice diagnostics archive");
+        }
+
+        function openSystemDiagnostics() {
+            document.getElementById('diagnosticsModal').classList.remove('hidden');
+            document.getElementById('diagnosticsModal').classList.add('flex');
+        }
+
+        function closeDiagnosticsModal() {
+            document.getElementById('diagnosticsModal').classList.add('hidden');
+            document.getElementById('diagnosticsModal').classList.remove('flex');
+        }
+
+        /* ================= TOAST NOTIFICATION HELPER ================= */
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toastBox');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2500);
+        }
+    
+        /* ================= GUARANTEED LOGO FALLBACK ================= */
+        const LOGO_DATA_URI = "data:image/png;base64,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";
+        function handleLogoFallback(img) {
+            if (!img) return;
+            img.onerror = null;
+            img.src = LOGO_DATA_URI;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const logo = document.getElementById('brandLogoImg');
+            if (logo && (!logo.complete || logo.naturalWidth === 0)) {
+                logo.src = LOGO_DATA_URI;
+            }
+        });
+
+    
+        /* ================= VOICE IMPORTANCE SLIDESHOW & TEXT MASKING ================= */
+        const voiceSlides = [
+            {
+                title: "Acoustic Vocal Resonance",
+                icon: "🎙️",
+                insight: "Vocal Resonance • 84% of emotional intent is carried by pitch harmonics & timbre.",
+                image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmcxIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzFlMWI0YiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMzA3MTIiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9IndhdmUxIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyZGQ0YmYiIHN0b3Atb3BhY2l0eT0iMC45Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMzUlIiBzdG9wLWNvbG9yPSIjODE4Y2Y4IiBzdG9wLW9wYWNpdHk9IjAuOTUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI3MCUiIHN0b3AtY29sb3I9IiNjMDg0ZmMiIHN0b3Atb3BhY2l0eT0iMC45Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzM4YmRmOCIgc3RvcC1vcGFjaXR5PSIwLjg1Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJ3YXZlMiIgeDE9IjEwMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjQzZjVlIiBzdG9wLW9wYWNpdHk9IjAuNyIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iI2E4NTVmNyIgc3RvcC1vcGFjaXR5PSIwLjgiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDZiNmQ0IiBzdG9wLW9wYWNpdHk9IjAuOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3cxIiB4PSItMjAlIiB5PSItMjAlIiB3aWR0aD0iMTQwJSIgaGVpZ2h0PSIxNDAlIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMTIiIHJlc3VsdD0iYmx1ciIvPgogICAgICA8ZmVNZXJnZT4KICAgICAgICA8ZmVNZXJnZU5vZGUgaW49ImJsdXIiLz4KICAgICAgICA8ZmVNZXJnZU5vZGUgaW49IlNvdXJjZUdyYXBoaWMiLz4KICAgICAgPC9mZU1lcmdlPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjkwMCIgZmlsbD0idXJsKCNiZzEpIi8+CiAgPCEtLSBGcmVxdWVuY3kgR3JpZCBsaW5lcyAtLT4KICA8ZyBvcGFjaXR5PSIwLjE1IiBzdHJva2U9IiM4MThjZjgiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCA4Ij4KICAgIDxsaW5lIHgxPSIwIiB5MT0iMjAwIiB4Mj0iMTYwMCIgeTI9IjIwMCIvPgogICAgPGxpbmUgeDE9IjAiIHkxPSIzNTAiIHgyPSIxNjAwIiB5Mj0iMzUwIi8+CiAgICA8bGluZSB4MT0iMCIgeTE9IjUwMCIgeDI9IjE2MDAiIHkyPSI1MDAiLz4KICAgIDxsaW5lIHgxPSIwIiB5MT0iNjUwIiB4Mj0iMTYwMCIgeTI9IjY1MCIvPgogICAgPGxpbmUgeDE9IjMwMCIgeTE9IjAiIHgyPSIzMDAiIHkyPSI5MDAiLz4KICAgIDxsaW5lIHgxPSI2MDAiIHkxPSIwIiB4Mj0iNjAwIiB5Mj0iOTAwIi8+CiAgICA8bGluZSB4MT0iOTAwIiB5MT0iMCIgeDI9IjkwMCIgeTI9IjkwMCIvPgogICAgPGxpbmUgeDE9IjEyMDAiIHkxPSIwIiB4Mj0iMTIwMCIgeTI9IjkwMCIvPgogIDwvZz4KICA8IS0tIEhhcm1vbmljIFJlc29uYW5jZSBXYXZlcyAtLT4KICA8cGF0aCBkPSJNLTUwLDQ1MCBDMjUwLDIyMCA0NTAsNjgwIDc1MCw0MjAgQzEwNTAsMTgwIDEyNTAsNjIwIDE2NTAsNDUwIiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjd2F2ZTEpIiBzdHJva2Utd2lkdGg9IjgiIGZpbHRlcj0idXJsKCNnbG93MSkiLz4KICA8cGF0aCBkPSJNLTUwLDQ4MCBDMjAwLDYyMCA1MDAsMjgwIDgwMCw1MjAgQzExMDAsNjgwIDEzNTAsMjYwIDE2NTAsNDcwIiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjd2F2ZTIpIiBzdHJva2Utd2lkdGg9IjUiIGZpbHRlcj0idXJsKCNnbG93MSkiLz4KICA8cGF0aCBkPSJNLTUwLDQyMCBDMzAwLDMyMCA1NTAsNTYwIDg1MCwzODAgQzExNTAsMjQwIDE0MDAsNTQwIDE2NTAsNDMwIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZGQ0YmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44NSIvPgogIDxwYXRoIGQ9Ik0tNTAsNDYwIEMzNTAsNTAwIDY1MCwzNjAgOTUwLDQ4MCBDMTI1MCw1ODAgMTQ1MCwzODAgMTY1MCw0NjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MwODRmYyIgc3Ryb2tlLXdpZHRoPSIyLjUiIG9wYWNpdHk9IjAuNiIvPgogIDwhLS0gR2xvd2luZyBTcGVjdHJvZ3JhbSBFbmVyZ3kgUGFydGljbGVzIC0tPgogIDxjaXJjbGUgY3g9IjQ1MCIgY3k9IjQ4MCIgcj0iMTQwIiBmaWxsPSIjN2MzYWVkIiBvcGFjaXR5PSIwLjE4IiBmaWx0ZXI9InVybCgjZ2xvdzEpIi8+CiAgPGNpcmNsZSBjeD0iMTE1MCIgY3k9IjM4MCIgcj0iMTYwIiBmaWxsPSIjMDZiNmQ0IiBvcGFjaXR5PSIwLjE4IiBmaWx0ZXI9InVybCgjZ2xvdzEpIi8+CiAgPGNpcmNsZSBjeD0iODAwIiBjeT0iNDUwIiByPSIxODAiIGZpbGw9IiNlYzQ4OTkiIG9wYWNpdHk9IjAuMTIiIGZpbHRlcj0idXJsKCNnbG93MSkiLz4KPC9zdmc+"
+            },
+            {
+                title: "Speech Biomarkers & Vocal Cord Stress",
+                icon: "🧬",
+                insight: "Acoustic Biomarkers • Micro-tremors in vocal folds reveal cognitive stress before conscious awareness.",
+                image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmcyIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzE4MGIyYyIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjYwJSIgc3RvcC1jb2xvcj0iIzJlMTA2NSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMjA2MTciLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJpb0dyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2VjNDg5OSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iI2E4NTVmNyIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwNmI2ZDQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJnbG93MiIgeD0iLTIwJSIgeT0iLTIwJSIgd2lkdGg9IjE0MCUiIGhlaWdodD0iMTQwJSI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjE0IiByZXN1bHQ9ImJsdXIiLz4KICAgICAgPGZlTWVyZ2U+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJibHVyIi8+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICAgIDwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIGZpbGw9InVybCgjYmcyKSIvPgogIDwhLS0gVm9jYWwgRm9sZCBTaG9ja3dhdmUgUmluZ3MgLS0+CiAgPGcgb3BhY2l0eT0iMC4yNSI+CiAgICA8ZWxsaXBzZSBjeD0iODAwIiBjeT0iNDUwIiByeD0iNjUwIiByeT0iMjgwIiBmaWxsPSJub25lIiBzdHJva2U9IiNhODU1ZjciIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGVsbGlwc2UgY3g9IjgwMCIgY3k9IjQ1MCIgcng9IjUyMCIgcnk9IjIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZWM0ODk5IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjEwIDgiLz4KICAgIDxlbGxpcHNlIGN4PSI4MDAiIGN5PSI0NTAiIHJ4PSIzODAiIHJ5PSIxNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzA2YjZkNCIgc3Ryb2tlLXdpZHRoPSIyLjUiLz4KICAgIDxlbGxpcHNlIGN4PSI4MDAiIGN5PSI0NTAiIHJ4PSIyMjAiIHJ5PSI5NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjMiIGZpbHRlcj0idXJsKCNnbG93MikiLz4KICA8L2c+CiAgPCEtLSBNaWNyb3RyZW1vciBKaXR0ZXIgV2F2ZWZvcm0gLS0+CiAgPHBhdGggZD0iTS01MCw0NTAgTDE1MCw0NTAgTDIyMCwzODAgTDI5MCw1MjAgTDM1MCw0MzAgTDQyMCw0OTAgTDQ4MCwzMTAgTDU0MCw2MjAgTDYxMCwyNjAgTDY4MCw2ODAgTDc1MCwyMjAgTDgyMCw2OTAgTDg5MCwyNzAgTDk2MCw2MTAgTDEwMjAsMzQwIEwxMDkwLDUxMCBMMTE1MCw0MzAgTDEyMTAsNDgwIEwxMjgwLDM5MCBMMTM1MCw1MTAgTDE0MjAsNDUwIEwxNjUwLDQ1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ1cmwoI2Jpb0dyYWQpIiBzdHJva2Utd2lkdGg9IjYiIGZpbHRlcj0idXJsKCNnbG93MikiLz4KICA8Y2lyY2xlIGN4PSI3NTAiIGN5PSIyMjAiIHI9IjgiIGZpbGw9IiNlYzQ4OTkiIGZpbHRlcj0idXJsKCNnbG93MikiLz4KICA8Y2lyY2xlIGN4PSI4MjAiIGN5PSI2OTAiIHI9IjgiIGZpbGw9IiMwNmI2ZDQiIGZpbHRlcj0idXJsKCNnbG93MikiLz4KICA8Y2lyY2xlIGN4PSI2ODAiIGN5PSI2ODAiIHI9IjYiIGZpbGw9IiNhODU1ZjciLz4KICA8Y2lyY2xlIGN4PSI2MTAiIGN5PSIyNjAiIHI9IjYiIGZpbGw9IiNmNDNmNWUiLz4KPC9zdmc+"
+            },
+            {
+                title: "Harmonic Formants & Frequency Spectrum",
+                icon: "🌊",
+                insight: "Harmonic Formants • The vocal tract produces over 4,000 acoustic biomarker data points per second.",
+                image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmczIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzA0MmYyZSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwODMzNDQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNwZWN0cnVtR3JhZCIgeDE9IjAlIiB5MT0iMTAwJSIgeDI9IjAlIiB5Mj0iMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMDZiNmQ0IiBzdG9wLW9wYWNpdHk9IjAuOCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzE0YjhhNiIgc3RvcC1vcGFjaXR5PSIwLjkiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjYTNlNjM1IiBzdG9wLW9wYWNpdHk9IjAuOTUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJnbG93MyIgeD0iLTIwJSIgeT0iLTIwJSIgd2lkdGg9IjE0MCUiIGhlaWdodD0iMTQwJSI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjEyIiByZXN1bHQ9ImJsdXIiLz4KICAgICAgPGZlTWVyZ2U+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJibHVyIi8+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICAgIDwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIGZpbGw9InVybCgjYmczKSIvPgogIDwhLS0gTXVsdGktc3BlY3RydW0gRm9ybWFudCBQZWFrcyAtLT4KICA8cGF0aCBkPSJNLTUwLDc1MCBDMTgwLDcyMCAzMjAsMzgwIDQ4MCwyNDAgQzYyMCwxMjAgNzIwLDUyMCA4NTAsMjgwIEM5ODAsODAgMTEyMCw0NDAgMTI4MCwzMjAgQzE0MjAsMjAwIDE1MjAsNjgwIDE2NTAsNzUwIFoiIGZpbGw9InVybCgjc3BlY3RydW1HcmFkKSIgb3BhY2l0eT0iMC4zIiBmaWx0ZXI9InVybCgjZ2xvdzMpIi8+CiAgPHBhdGggZD0iTS01MCw3NTAgQzE4MCw3MjAgMzIwLDM4MCA0ODAsMjQwIEM2MjAsMTIwIDcyMCw1MjAgODUwLDI4MCBDOTgwLDgwIDExMjAsNDQwIDEyODAsMzIwIEMxNDIwLDIwMCAxNTIwLDY4MCAxNjUwLDc1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmRkNGJmIiBzdHJva2Utd2lkdGg9IjYiIGZpbHRlcj0idXJsKCNnbG93MykiLz4KICA8cGF0aCBkPSJNLTUwLDc4MCBDMjIwLDc0MCA0MDAsNDYwIDU2MCwzNDAgQzcyMCwyMjAgODIwLDYyMCA5NTAsNDIwIEMxMDgwLDIyMCAxMjIwLDU2MCAxMzgwLDQ0MCBDMTUwMCwzNDAgMTU4MCw3MjAgMTY1MCw3ODAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM4YmRmOCIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjc1Ii8+CiAgPGNpcmNsZSBjeD0iODUwIiBjeT0iMjgwIiByPSIxMCIgZmlsbD0iI2EzZTYzNSIgZmlsdGVyPSJ1cmwoI2dsb3czKSIvPgogIDxjaXJjbGUgY3g9IjQ4MCIgY3k9IjI0MCIgcj0iOSIgZmlsbD0iIzE0YjhhNiIgZmlsdGVyPSJ1cmwoI2dsb3czKSIvPgogIDxjaXJjbGUgY3g9IjEyODAiIGN5PSIzMjAiIHI9IjkiIGZpbGw9IiMzOGJkZjgiIGZpbHRlcj0idXJsKCNnbG93MykiLz4KPC9zdmc+"
+            },
+            {
+                title: "The Human Voice as an Emotional Mirror",
+                icon: "🧠",
+                insight: "Emotional Mirror • Speech tempo, jitter, and silence reveal unfiltered cognitive & emotional state.",
+                image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmc0IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAyMDYxNyIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzFlMWI0YiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMzYjA3NjQiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Im1pcnJvckdyYWQxIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiNlYzQ4OTkiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjOGI1Y2Y2Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0iZ2xvdzQiIHg9Ii0yMCUiIHk9Ii0yMCUiIHdpZHRoPSIxNDAlIiBoZWlnaHQ9IjE0MCUiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIxNSIgcmVzdWx0PSJibHVyIi8+CiAgICAgIDxmZU1lcmdlPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iYmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIiBmaWxsPSJ1cmwoI2JnNCkiLz4KICA8IS0tIFN5bW1ldHJpY2FsIE1pcnJvciBTb3VuZHdhdmVzIC0tPgogIDxwYXRoIGQ9Ik0tNTAsNDUwIEMyMDAsMTgwIDQwMCw3MjAgNjUwLDM1MCBDODAwLDIyMCA4MDAsNjgwIDk1MCw1NTAgQzEyMDAsMTgwIDE0MDAsNzIwIDE2NTAsNDUwIiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjbWlycm9yR3JhZDEpIiBzdHJva2Utd2lkdGg9IjciIGZpbHRlcj0idXJsKCNnbG93NCkiLz4KICA8cGF0aCBkPSJNLTUwLDQ1MCBDMjAwLDcyMCA0MDAsMTgwIDY1MCw1NTAgQzgwMCw2ODAgODAwLDIyMCA5NTAsMzUwIEMxMjAwLDcyMCAxNDAwLDE4MCAxNjUwLDQ1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuNzUiIGZpbHRlcj0idXJsKCNnbG93NCkiLz4KICA8IS0tIENlbnRyYWwgUHVsc2UgT3JiIC0tPgogIDxjaXJjbGUgY3g9IjgwMCIgY3k9IjQ1MCIgcj0iMTQiIGZpbGw9IiNlYzQ4OTkiIGZpbHRlcj0idXJsKCNnbG93NCkiLz4KICA8Y2lyY2xlIGN4PSI4MDAiIGN5PSI0NTAiIHI9IjYwIiBmaWxsPSJub25lIiBzdHJva2U9IiNlYzQ4OTkiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC42Ii8+CiAgPGNpcmNsZSBjeD0iODAwIiBjeT0iNDUwIiByPSIxMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiNWNmNiIgc3Ryb2tlLXdpZHRoPSIxLjUiIG9wYWNpdHk9IjAuNCIgc3Ryb2tlLWRhc2hhcnJheT0iNiA2Ii8+CiAgPGNpcmNsZSBjeD0iODAwIiBjeT0iNDUwIiByPSIxOTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzYzNjZmMSIgc3Ryb2tlLXdpZHRoPSIxIiBvcGFjaXR5PSIwLjI1Ii8+Cjwvc3ZnPg=="
+            }
+        ];
+
+        let currentVoiceSlideIdx = 0;
+        let voiceSlideInterval = null;
+
+        function setVoiceSlide(idx) {
+            currentVoiceSlideIdx = (idx + voiceSlides.length) % voiceSlides.length;
+            const slide = voiceSlides[currentVoiceSlideIdx];
+            
+            // 1. Update text mask background image
+            const heading = document.getElementById('welcomeMaskedHeading');
+            if (heading) {
+                heading.style.setProperty('--active-voice-bg', `url("${slide.image}")`);
+            }
+
+            // 2. Update hero background visual
+            const bg = document.getElementById('heroBgImage');
+            if (bg) {
+                bg.style.backgroundImage = `url("${slide.image}")`;
+            }
+
+            // 3. Update insight badge
+            const icon = document.getElementById('voiceInsightIcon');
+            const text = document.getElementById('voiceInsightText');
+            if (icon) icon.innerText = slide.icon;
+            if (text) text.innerText = slide.insight;
+
+            // 4. Update dots
+            const dots = document.querySelectorAll('.voice-slide-dot');
+            dots.forEach((dot, i) => {
+                if (i === currentVoiceSlideIdx) {
+                    dot.className = "voice-slide-dot w-7 h-1.5 rounded-full bg-brand-600 dark:bg-brand-400 transition-all cursor-pointer";
+                } else {
+                    dot.className = "voice-slide-dot w-2 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-brand-400 transition-all cursor-pointer";
+                }
+            });
+        }
+
+        function startVoiceSlideTimer() {
+            clearInterval(voiceSlideInterval);
+            voiceSlideInterval = setInterval(() => {
+                setVoiceSlide(currentVoiceSlideIdx + 1);
+            }, 4500);
+        }
+
+        // Initialize voice slide
+        document.addEventListener('DOMContentLoaded', () => {
+            // Clean up raw template tags if in offline static preview mode
+            document.querySelectorAll('.user-email-text').forEach(el => {
+                if (el.innerText.includes('{%')) el.innerText = 'alex@svaraabhava.ai';
+            });
+            document.querySelectorAll('.welcome-user-name, .user-display-name').forEach(el => {
+                if (el.innerText.includes('{%')) el.innerText = 'Username';
+            });
+            setVoiceSlide(0);
+            startVoiceSlideTimer();
+
+            // Pause on hover
+            const hero = document.getElementById('voiceHeroShowcase');
+            if (hero) {
+                hero.addEventListener('mouseenter', () => clearInterval(voiceSlideInterval));
+                hero.addEventListener('mouseleave', () => startVoiceSlideTimer());
+            }
+        });
+
+        /* ================= USER PROFILE DROPDOWN LOGIC ================= */
+        function toggleProfileDropdown(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('profileDropdownMenu');
+            const chevron = document.getElementById('profileChevron');
+            if (!menu) return;
+
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    menu.classList.remove('opacity-0', 'scale-95');
+                    menu.classList.add('opacity-100', 'scale-100');
+                    if (chevron) chevron.classList.add('rotate-180');
+                });
+            } else {
+                closeProfileDropdown();
+            }
+        }
+
+        function closeProfileDropdown() {
+            const menu = document.getElementById('profileDropdownMenu');
+            const chevron = document.getElementById('profileChevron');
+            if (!menu || menu.classList.contains('hidden')) return;
+
+            menu.classList.remove('opacity-100', 'scale-100');
+            menu.classList.add('opacity-0', 'scale-95');
+            if (chevron) chevron.classList.remove('rotate-180');
+            setTimeout(() => {
+                menu.classList.add('hidden');
+            }, 200);
+        }
+
+        function handleProfileNav(section) {
+            closeProfileDropdown();
+            if (section === 'profile') {
+                showToast("Opening SVARAABHAVA User Profile & Acoustic Credentials...");
+            } else if (section === 'settings') {
+                showToast("Opening Acoustic Intelligence Engine Settings...");
+            }
+        }
+
+        function handleLogout(e) {
+            showToast("Logging out of SVARAABHAVA session...");
+        }
+
+        // Click outside or press Escape to close dropdown
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('profileDropdownContainer');
+            if (container && !container.contains(e.target)) {
+                closeProfileDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeProfileDropdown();
+            }
+        });
+
+    </script>
+</body>
+</html>
