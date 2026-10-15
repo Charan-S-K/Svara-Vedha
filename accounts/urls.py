@@ -41,4 +41,5 @@ path(
     views.create_reset_password,
     name="create_reset_password"
 ),
+path("logout/", views.logout_view, name="logout"),
 ]

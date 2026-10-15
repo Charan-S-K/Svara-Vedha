@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     'accounts',
+    'home',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -178,3 +179,5 @@ SOCIALACCOUNT_PROVIDERS = {
         'EMAIL_AUTHENTICATION_AUTO_CONNECT': True,
     }
 }
+
+LOGIN_REDIRECT_URL = "/dashboard/"

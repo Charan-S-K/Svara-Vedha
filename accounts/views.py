@@ -4,39 +4,49 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.http import JsonResponse
+from django.contrib.auth import logout as auth_logout
+from django.views.decorators.http import require_POST
 
 from .models import Profile
 from mail import send_mail
 
+@require_POST
+def logout_view(request):
+    auth_logout(request)
+    return redirect("login")
+
 
 def login(request):
-
     if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
 
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        try:
+            user_record = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            messages.error(request, "Invalid email or password.")
+            return render(request, "accounts/login.html")
+        except User.MultipleObjectsReturned:
+            messages.error(
+                request,
+                "Multiple accounts use this email. Please contact support."
+            )
+            return render(request, "accounts/login.html")
 
         user = authenticate(
             request,
-            username=email,
+            username=user_record.username,
             password=password
         )
 
         if user is not None:
-
             auth_login(request, user)
+            return redirect("dashboard")
 
-            return redirect("/")
+        messages.error(request, "Invalid email or password.")
 
-        messages.error(
-            request,
-            "Invalid email or password."
-        )
+    return render(request, "accounts/login.html")
 
-    return render(
-        request,
-        "accounts/login.html"
-    )
 
 
 def register(request):
