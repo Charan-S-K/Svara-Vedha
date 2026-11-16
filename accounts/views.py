@@ -6,9 +6,29 @@ from django.contrib.auth import login as auth_login
 from django.http import JsonResponse
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.http import require_POST
+from django.db.models import Q
+from django.conf import settings
+from django.utils import timezone
+import json
+import numpy as np
 
-from .models import Profile
+from .models import Profile, AttendanceRecord
 from mail import send_mail
+from .services import (
+    FaceValidationError,
+    NoFaceDetectedError,
+    MultipleFacesDetectedError,
+    FaceRecognitionError,
+    extract_face_embedding,
+    compare_face_embeddings,
+    get_face_storage,
+    StorageNotConfiguredError,
+    DuplicateEnrollmentError,
+    InactiveTemplateError,
+    verify_college_geofence,
+    GeofenceValidationError,
+)
+
 
 @require_POST
 def logout_view(request):
@@ -182,12 +202,15 @@ def verify_otp(request):
                 None
             )
 
+            # Authenticate user and navigate to biometric face enrollment
+            auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
             messages.success(
                 request,
-                "Registration successful. Please login."
+                "Registration verified successfully! Please complete your biometric face enrollment."
             )
 
-            return redirect("/")
+            return redirect("/face-enroll/")
 
         else:
 
@@ -356,3 +379,353 @@ def create_reset_password(request):
         request,
         "accounts/create_new_password.html"
     )
+
+def _parse_request_data(request):
+    """Helper to extract parameters from POST form-data or JSON body."""
+    data = {}
+    if request.content_type and "application/json" in request.content_type:
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except Exception:
+            data = {}
+    for k, v in request.POST.items():
+        data[k] = v
+    return data
+
+
+def face_enroll_api(request):
+    """
+    Backend face enrollment endpoint (Phase 4).
+    Enrolls a fresh 512-D ArcFace template for the authenticated Django user in MongoDB Atlas.
+    Supports authenticated re-enrollment when explicitly requested.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed. Use POST."}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"success": False, "error": "Authentication required. You must be logged into an existing account to enroll your face."},
+            status=401,
+        )
+
+    data = _parse_request_data(request)
+    face_image = data.get("face_image")
+    re_enroll = str(data.get("re_enroll", "")).lower() in ("true", "1", "yes") or str(data.get("overwrite", "")).lower() in ("true", "1", "yes")
+
+    if not face_image:
+        return JsonResponse({"success": False, "error": "No face image provided for enrollment."}, status=400)
+
+    try:
+        extraction_result = extract_face_embedding(face_image)
+        embedding = extraction_result["embedding"]
+
+        storage = get_face_storage()
+        persisted = storage.save_face_template(
+            user_id=request.user.id,
+            embedding=embedding,
+            metadata={
+                "username": request.user.username,
+                "email": request.user.email,
+                "det_score": extraction_result.get("det_score", 1.0),
+            },
+            overwrite=re_enroll,
+        )
+
+        if not persisted:
+            return JsonResponse(
+                {"success": False, "error": "Failed to persist face template in storage."},
+                status=500,
+            )
+
+        return JsonResponse({
+            "success": True,
+            "message": "Biometric face template enrolled successfully.",
+            "redirect_url": "/dashboard/",
+        })
+
+    except DuplicateEnrollmentError:
+        return JsonResponse({
+            "success": False,
+            "error": "Face already enrolled for this account. To update your face template, please confirm re-enrollment.",
+            "code": "already_enrolled",
+        }, status=409)
+    except StorageNotConfiguredError:
+        return JsonResponse({
+            "success": False,
+            "error": "Biometric template storage is not configured. Face template cannot be saved until MongoDB is connected.",
+            "code": "storage_not_configured",
+        }, status=503)
+    except FaceValidationError as e:
+        return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Face enrollment failed: {str(e)}"}, status=500)
+
+
+def face_login_api(request):
+    """
+    Backend face login endpoint (Phase 5).
+    Verifies probe face embedding against stored reference template in MongoDB and authenticates Django session.
+    Cycles session key on successful authentication.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed. Use POST."}, status=405)
+
+    data = _parse_request_data(request)
+    identifier = (data.get("identifier") or data.get("email") or data.get("username") or "").strip()
+    face_image = data.get("face_image")
+
+    if not identifier and request.user.is_authenticated:
+        identifier = request.user.email or request.user.username
+
+    if not identifier:
+        return JsonResponse({
+            "success": False,
+            "error": "Account identifier (email or username) is required for face sign in.",
+            "code": "missing_identifier",
+        }, status=400)
+
+    if not face_image:
+        return JsonResponse({"success": False, "error": "No face image provided for verification."}, status=400)
+
+    # Rate limiting: maximum 5 failed attempts per session window
+    failed_attempts = request.session.get("face_login_failed_attempts", 0)
+    if failed_attempts >= 5:
+        return JsonResponse({
+            "success": False,
+            "error": "Too many failed face login attempts. Please sign in using your account password.",
+            "code": "rate_limited",
+        }, status=429)
+
+    user = User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
+    if not user:
+        return JsonResponse({"success": False, "error": "No account found matching this identifier.", "code": "user_not_found"}, status=404)
+
+    try:
+        extraction_result = extract_face_embedding(face_image)
+        probe_embedding = extraction_result["embedding"]
+
+        storage = get_face_storage()
+        template_record = storage.get_face_template(user.id)
+
+        if template_record is None or "embedding" not in template_record:
+            return JsonResponse({
+                "success": False,
+                "error": "No registered face template found for this account. Please enroll your face first.",
+                "code": "template_not_found",
+            }, status=404)
+
+        # Check if template is active
+        is_active = template_record.get("enrollment", {}).get("is_active", True)
+        if not is_active:
+            return JsonResponse({
+                "success": False,
+                "error": "Face template is inactive or archived. Please contact an administrator or re-enroll.",
+                "code": "template_inactive",
+            }, status=403)
+
+        stored_embedding = template_record["embedding"]
+        sim_result = compare_face_embeddings(probe_embedding, stored_embedding)
+
+        if not sim_result["is_match"]:
+            request.session["face_login_failed_attempts"] = failed_attempts + 1
+            return JsonResponse({
+                "success": False,
+                "error": "Face verification failed.",
+                "code": "face_mismatch",
+            }, status=401)
+
+        # Successful face verification -> reset counter, authenticate Django session, cycle session key
+        request.session.pop("face_login_failed_attempts", None)
+        auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        request.session.cycle_key()
+
+        return JsonResponse({
+            "success": True,
+            "message": f"Welcome back, {user.first_name or user.username}! Identity verified.",
+            "redirect_url": "/dashboard/",
+        })
+
+    except StorageNotConfiguredError:
+        return JsonResponse({
+            "success": False,
+            "error": "Biometric template storage is not configured. Please connect your MongoDB implementation to enable face sign-in.",
+            "code": "storage_not_configured",
+        }, status=503)
+    except FaceValidationError as e:
+        return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Face verification failed: {str(e)}"}, status=500)
+
+
+def face_attendance_api(request):
+    """
+    Separate attendance verification endpoint (Phase 6).
+    Verifies biometric identity and college geofence before recording attendance in both
+    Django AttendanceRecord ORM and MongoDB attendance_records collection.
+    Attendance remains strictly separate from dashboard login session.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed. Use POST."}, status=405)
+
+    data = _parse_request_data(request)
+    face_image = data.get("face_image")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    accuracy = data.get("accuracy")
+
+    if not face_image:
+        return JsonResponse({"success": False, "error": "No face image provided for attendance punch."}, status=400)
+
+    # 1. Resolve user
+    if request.user.is_authenticated:
+        user = request.user
+    else:
+        identifier = (data.get("identifier") or data.get("email") or data.get("username") or "").strip()
+        if not identifier:
+            return JsonResponse({
+                "success": False,
+                "error": "Account identifier (email or username) is required to punch attendance.",
+                "code": "missing_identifier",
+            }, status=400)
+        user = User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
+        if not user:
+            return JsonResponse({"success": False, "error": "User account not found.", "code": "user_not_found"}, status=404)
+
+    # 2. Server-side GPS & College Geofence Verification
+    try:
+        geo_result = verify_college_geofence(latitude, longitude, accuracy)
+    except GeofenceValidationError as ge:
+        return JsonResponse({"success": False, "error": str(ge), "code": getattr(ge, "code", "geofence_error")}, status=400)
+
+    # 3. Server-side Biometric Face Verification
+    try:
+        extraction_result = extract_face_embedding(face_image)
+        probe_embedding = extraction_result["embedding"]
+
+        storage = get_face_storage()
+        template_record = storage.get_face_template(user.id)
+
+        if template_record is None or "embedding" not in template_record:
+            return JsonResponse({
+                "success": False,
+                "error": "No registered face template found for this account. Please enroll your face first.",
+                "code": "template_not_found",
+            }, status=404)
+
+        # Check if template is active
+        is_active = template_record.get("enrollment", {}).get("is_active", True)
+        if not is_active:
+            return JsonResponse({
+                "success": False,
+                "error": "Face template is inactive. Attendance cannot be verified.",
+                "code": "template_inactive",
+            }, status=403)
+
+        stored_embedding = template_record["embedding"]
+        sim_result = compare_face_embeddings(probe_embedding, stored_embedding)
+
+        if not sim_result["is_match"]:
+            return JsonResponse({
+                "success": False,
+                "error": "Face verification failed.",
+                "code": "face_mismatch",
+            }, status=401)
+
+        today = timezone.localdate() if hasattr(timezone, "localdate") else timezone.now().date()
+
+        # 4. Duplicate daily punch prevention
+        already_punched = AttendanceRecord.objects.filter(user=user, date=today).exists()
+        if not already_punched and hasattr(storage, "has_punched_today"):
+            try:
+                already_punched = storage.has_punched_today(user.id)
+            except Exception:
+                pass
+
+        if already_punched:
+            return JsonResponse({
+                "success": True,
+                "attendance_status": "already_recorded",
+                "message": f"Attendance already recorded for today ({today.isoformat()}).",
+                "data": {
+                    "user": user.username,
+                    "date": str(today),
+                    "status": "already_recorded",
+                    "distance_meters": geo_result["distance_meters"],
+                },
+            })
+
+        # 5. Record attendance in Django ORM
+        AttendanceRecord.objects.create(
+            user=user,
+            date=today,
+            status="present",
+            latitude=geo_result["latitude"],
+            longitude=geo_result["longitude"],
+            distance_meters=geo_result["distance_meters"],
+            accuracy_meters=geo_result["accuracy_meters"],
+            similarity=sim_result["similarity"],
+            verification_method="arcface_buffalo_l",
+        )
+
+        # 6. Record attendance in MongoDB collection if supported
+        if hasattr(storage, "record_attendance"):
+            try:
+                storage.record_attendance(
+                    user_id=user.id,
+                    latitude=geo_result["latitude"],
+                    longitude=geo_result["longitude"],
+                    distance_meters=geo_result["distance_meters"],
+                    accuracy_meters=geo_result["accuracy_meters"],
+                    similarity=sim_result["similarity"],
+                )
+            except Exception:
+                pass
+
+        return JsonResponse({
+            "success": True,
+            "attendance_status": "recorded",
+            "message": f"Attendance verified and recorded successfully ({geo_result['distance_meters']}m from campus center).",
+            "data": {
+                "user": user.username,
+                "distance_meters": geo_result["distance_meters"],
+                "accuracy_meters": geo_result["accuracy_meters"],
+                "status": "present",
+                "date": str(today),
+            },
+        })
+
+    except StorageNotConfiguredError:
+        return JsonResponse({
+            "success": False,
+            "error": "Face template storage is not configured. Attendance cannot be verified until MongoDB is connected.",
+            "code": "storage_not_configured",
+        }, status=503)
+    except FaceValidationError as e:
+        return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Attendance verification failed: {str(e)}"}, status=500)
+
+
+def face_login(request):
+    """
+    Unified face view.
+    - On GET: Renders face.html with camera interface and MediaPipe guidance.
+    - On POST: Dispatches to enroll, punch, or signin according to action_type.
+    """
+    if request.method == "POST":
+        data = _parse_request_data(request)
+        action_type = str(data.get("action_type", "signin")).strip().lower()
+        if action_type == "enroll":
+            return face_enroll_api(request)
+        elif action_type == "punch":
+            return face_attendance_api(request)
+        else:
+            return face_login_api(request)
+
+    mode = request.GET.get("mode", "login")
+    return render(request, "accounts/face.html", {"mode": mode})
+
+
+def face_enroll_page(request):
+    """Dedicated face enrollment page view."""
+    return render(request, "accounts/face.html", {"mode": "enroll"})

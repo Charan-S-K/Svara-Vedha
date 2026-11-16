@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVARAABHAVA | Biometric Face Authentication & Attendance</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Google MediaPipe Face Mesh & Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            900: '#090b1e',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-up': 'slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scan-sweep': 'sweepScan 3.2s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2.4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(6px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(14px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        sweepScan: {
+                            '0%': { top: '6%', opacity: '0.85' },
+                            '50%': { top: '88%', opacity: '1' },
+                            '100%': { top: '6%', opacity: '0.85' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
+                            '50%': { opacity: '0.9', transform: 'scale(1.03)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Terminal custom scrollbar */
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        
+        /* Metallic Kiosk Frame */
+        .tablet-kiosk-frame {
+            background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 15%, #94a3b8 45%, #64748b 55%, #cbd5e1 85%, #f1f5f9 100%);
+            box-shadow: 
+                0 22px 45px -12px rgba(15, 23, 42, 0.32),
+                0 4px 14px rgba(15, 23, 42, 0.12),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95),
+                inset 0 -1px 2px rgba(71, 85, 105, 0.6);
+        }
+
+        /* Scanning laser fast sweep animation */
+        .fast-scan {
+            animation: sweepScan 1s ease-in-out infinite !important;
+        }
+
+        /* View transitions */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .view-section.active {
+            display: block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body data-face-mode="{{ mode|default:'login' }}" data-user-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}" class="antialiased bg-white text-slate-900 h-screen overflow-hidden flex select-none">
+
+    <!-- =========================================================================
+         LEFT PANEL: Brand & Vision Showcase (Exact Match with SVARAABHAVA Brand)
+         ========================================================================= -->
+    <div class="hidden lg:flex lg:w-1/2 bg-[#090b1e] relative overflow-hidden flex-col justify-between p-12 xl:p-16 text-white select-none">
+        
+        <!-- Interactive Animated Wave & Particle Canvas -->
+        <canvas id="slogan-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-[6]"></canvas>
+
+        <!-- Ambient Glowing Background Orbs & Flares -->
+        <div class="absolute -top-24 -left-20 w-[480px] h-[480px] bg-gradient-to-br from-indigo-500/25 via-purple-600/15 to-transparent rounded-full filter blur-[85px] pointer-events-none"></div>
+        <div class="absolute -bottom-16 -left-16 w-[420px] h-[420px] bg-gradient-to-tr from-fuchsia-600/35 via-purple-600/20 to-transparent rounded-full filter blur-[80px] pointer-events-none"></div>
+        
+        <!-- Giant Glowing Violet/Purple Celestial Orb (Right Side) -->
+        <div class="absolute -right-28 bottom-8 w-[520px] h-[520px] rounded-full bg-gradient-to-tl from-purple-700/70 via-indigo-700/50 to-violet-500/25 pointer-events-none z-[4] border border-violet-400/20 shadow-[0_0_120px_rgba(168,85,247,0.38),inset_0_0_90px_rgba(192,132,252,0.25)]"></div>
+
+        <!-- Top-Right 6x4 Dot Grid Matrix -->
+        <div class="absolute top-10 right-10 grid grid-cols-6 gap-3.5 opacity-30 pointer-events-none z-10" aria-hidden="true">
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+        </div>
+
+        <!-- Subtle Tech Hexagonal Honeycomb Pattern at Bottom-Left -->
+        <div class="absolute bottom-6 left-6 w-72 h-64 opacity-25 pointer-events-none z-[4]" aria-hidden="true">
+            <svg class="w-full h-full" viewBox="0 0 220 200" fill="none">
+                <defs>
+                    <pattern id="hex-mesh-pattern" width="28" height="48.497" patternUnits="userSpaceOnUse">
+                        <path d="M14 0 L28 8.083 L28 24.249 L14 32.332 L0 24.249 L0 8.083 Z M14 48.497 L28 40.414 L28 24.249 L14 16.166 L0 24.249 L0 40.414 Z" 
+                              fill="none" stroke="#818cf8" stroke-width="0.75" stroke-opacity="0.45"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#hex-mesh-pattern)" />
+            </svg>
+        </div>
+
+        <!-- Bottom-Left 4x3 Dot Grid Matrix -->
+        <div class="absolute bottom-28 left-12 grid grid-cols-4 gap-3.5 opacity-30 pointer-events-none z-10" aria-hidden="true">
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+        </div>
+
+        <!-- Flowing Abstract Glowing Wave Curves -->
+        <svg class="absolute bottom-0 left-0 w-full h-[62%] pointer-events-none z-[5]" viewBox="0 0 700 450" fill="none" preserveAspectRatio="none">
+            <path d="M-40,360 C160,390 240,220 420,280 C540,320 620,200 740,160" stroke="url(#wave-grad-1)" stroke-width="2.0" opacity="0.75"/>
+            <path d="M-40,390 C140,360 280,270 450,320 C560,350 640,240 740,210" stroke="url(#wave-grad-2)" stroke-width="1.3" opacity="0.45"/>
+            <path d="M-40,320 C180,340 300,160 480,240 C580,280 650,170 740,130" stroke="url(#wave-grad-1)" stroke-width="0.9" opacity="0.3"/>
+            <circle cx="280" cy="270" r="3" fill="#2dd4bf" filter="drop-shadow(0 0 8px #2dd4bf)" />
+            <circle cx="450" cy="320" r="2.5" fill="#818cf8" filter="drop-shadow(0 0 6px #818cf8)" />
+            <circle cx="620" cy="200" r="3" fill="#38bdf8" filter="drop-shadow(0 0 8px #38bdf8)" />
+            <defs>
+                <linearGradient id="wave-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.95"/>
+                    <stop offset="45%" stop-color="#818cf8" stop-opacity="0.7"/>
+                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.2"/>
+                </linearGradient>
+                <linearGradient id="wave-grad-2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.65"/>
+                    <stop offset="60%" stop-color="#6366f1" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.15"/>
+                </linearGradient>
+            </defs>
+        </svg>
+
+        <!-- Official SVARAABHAVA Brand Logo Header -->
+        <div class="relative z-10 flex items-center gap-3.5">
+            <img 
+                id="brandLogoImg"
+                src="{% static 'images/logo-symbol.png' %}" 
+                onerror="this.src='static/images/logo-symbol.png';"
+                alt="SVARAABHAVA Logo Symbol" 
+                class="h-10 w-auto drop-shadow-[0_0_16px_rgba(45,212,191,0.45)] object-contain"
+            />
+            <span class="text-2xl xl:text-[1.75rem] font-extrabold tracking-[0.16em] text-white">
+                SVARAABHAVA
+            </span>
+        </div>
+        
+        <!-- Hero Slogan & Subtitle Matching Reference Design -->
+        <div class="relative z-10 my-auto py-8">
+            <div class="space-y-4 max-w-xl">
+                <p id="leftPanelSubBadge" class="text-slate-400 font-medium text-base sm:text-lg tracking-wide">
+                    Welcome back
+                </p>
+
+                <div id="slogan-container" class="min-h-[140px] sm:min-h-[160px] lg:min-h-[185px] flex flex-col justify-center">
+                    <h1 id="slogan-heading" class="font-extrabold leading-[1.14] tracking-tight text-white transition-all duration-700 ease-out text-3xl sm:text-4xl lg:text-[2.75rem]">
+                        <span id="slogan-line-1" class="block">The feelings of the mind</span>
+                        <span id="slogan-line-2" class="block bg-gradient-to-r from-[#2dd4bf] via-[#38bdf8] to-[#22d3ee] bg-clip-text text-transparent drop-shadow-[0_0_28px_rgba(45,212,191,0.45)]">
+                            are reflected in the voice.
+                        </span>
+                    </h1>
+                </div>
+
+                <p class="text-slate-300/85 text-sm sm:text-base leading-relaxed max-w-lg font-normal pt-2">
+                    Experience seamless authentication with our advanced Infrastructure, Powered by industry leading security protocols.
+                </p>
+            </div>
+        </div>
+
+        <!-- Left Footer -->
+        <div class="relative z-10 flex items-center gap-4 text-xs sm:text-sm text-slate-400/80 font-medium">
+            <span>&copy; 2026 SVARAABHAVA</span>
+            <span>&bull;</span>
+            <a href="#" class="hover:text-white transition-colors">Privacy</a>
+            <span>&bull;</span>
+            <a href="#" class="hover:text-white transition-colors">Terms</a>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         RIGHT PANEL: Interactive Face Scanner, MediaPipe & Authentication
+         ========================================================================= -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto bg-white">
+        
+        <div class="w-full max-w-md relative flex flex-col items-center">
+
+            <!-- Mobile Brand Bar -->
+            <div class="lg:hidden flex items-center justify-between mb-6 pb-4 w-full border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <img 
+                        src="{% static 'images/logo-symbol.png' %}" 
+                        onerror="this.src='static/images/logo-symbol.png';"
+                        alt="SVARAABHAVA Logo Symbol" 
+                        class="h-8 w-auto drop-shadow-[0_0_12px_rgba(45,212,191,0.3)] object-contain"
+                    />
+                    <span class="text-xl font-extrabold tracking-[0.14em] text-slate-900">
+                        SVARAABHAVA
+                    </span>
+                </div>
+                <a href="{% url 'login' %}" class="text-xs font-semibold text-purple-600 hover:text-purple-700">
+                    &larr; Login
+                </a>
+            </div>
+            
+            <!-- Dynamic Page Heading (Changes dynamically in Enrollment Mode) -->
+            <div class="text-center mb-6 w-full">
+                <h2 id="pageHeading" class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Welcome back</h2>
+                <p id="pageSubheading" class="text-slate-500 mt-2 text-sm sm:text-base font-normal">Please present your face to sign in.</p>
+            </div>
+
+            <!-- Single-Face / Multi-Face / Status Validation Notice Banner -->
+            <div id="faceValidationAlert" class="hidden mb-4 w-full max-w-[370px] p-3 rounded-xl border text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in">
+                <i id="faceValidationAlertIcon" class="ph text-lg flex-shrink-0"></i>
+                <span id="faceValidationAlertText" class="font-medium"></span>
+            </div>
+
+            <!-- Metallic Tablet Kiosk Face Scanner Frame -->
+            <div class="relative w-full max-w-[340px] sm:max-w-[370px] aspect-[1.18] rounded-[32px] p-2.5 tablet-kiosk-frame transition-all">
+                
+                <!-- Top Bezel Sensor Camera Dot -->
+                <div class="absolute -top-[1px] left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full bg-slate-700/80 ring-1 ring-white/50 z-20"></div>
+
+                <!-- Inner Viewport Screen -->
+                <div class="relative w-full h-full bg-[#1e293b] overflow-hidden rounded-[24px] flex items-center justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                    
+                    <!-- Live Webcam Video Element -->
+                    <video id="faceWebcamFeed" autoplay playsinline muted class="hidden absolute inset-0 w-full h-full object-cover z-[2]"></video>
+
+                    <!-- Real-Time MediaPipe Landmark Canvas Overlay -->
+                    <canvas id="faceMeshOverlay" class="hidden absolute inset-0 w-full h-full object-cover z-[3] pointer-events-none"></canvas>
+
+                    <!-- Authentic Reference Portrait Preview (Displayed when camera is inactive) -->
+                    <img 
+                        id="faceFallbackImage" 
+                        src="{% static 'images/face-scanner-frame.png' %}" 
+                        onerror="this.src='static/images/face-scanner-frame.png';"
+                        alt="Face Biometric Display" 
+                        class="absolute inset-0 w-full h-full object-cover z-[1]"
+                    />
+
+                    <!-- Animated Luminous Sweeping Scan Laser Beam -->
+                    <div id="scanLaserBeam" class="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_16px_rgba(34,211,238,0.9),0_0_32px_rgba(45,212,191,0.7)] z-[10] pointer-events-none animate-scan-sweep">
+                        <div class="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-cyan-400/20 to-transparent pointer-events-none"></div>
+                    </div>
+
+                    <!-- Dynamic SVG Biometric HUD Targeting Overlay -->
+                    <svg class="absolute inset-0 w-full h-full z-[12] pointer-events-none select-none" viewBox="0 0 284 240" fill="none">
+                        <!-- 4 Outer Rounded Corner Target Brackets -->
+                        <g id="outerBrackets" stroke="rgba(255, 255, 255, 0.75)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="filter drop-shadow-[0_0_6px_rgba(255,255,255,0.45)] transition-all duration-300">
+                            <path d="M 40 68 L 40 48 A 12 12 0 0 1 52 36 L 72 36" />
+                            <path d="M 212 36 L 232 36 A 12 12 0 0 1 244 48 L 244 68" />
+                            <path d="M 40 172 L 40 192 A 12 12 0 0 0 52 204 L 72 204" />
+                            <path d="M 212 204 L 232 204 A 12 12 0 0 0 244 192 L 244 172" />
+                        </g>
+
+                        <!-- Inner Facial Landmark Brackets -->
+                        <g id="innerBrackets" stroke="rgba(226, 232, 240, 0.85)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" class="filter drop-shadow-[0_0_8px_rgba(148,163,184,0.6)]">
+                            <path d="M 70 102 L 70 82 A 10 10 0 0 1 80 72 L 100 72" />
+                            <path d="M 184 72 L 204 72 A 10 10 0 0 1 214 82 L 214 102" />
+                            <path d="M 70 138 L 70 158 A 10 10 0 0 0 80 168 L 100 168" />
+                            <path d="M 184 168 L 204 168 A 10 10 0 0 0 214 158 L 214 138" />
+                        </g>
+
+                        <!-- Biometric Facial Jawline Contour Guide -->
+                        <path id="jawContourPath" d="M 100 86 C 112 78, 172 78, 184 86 C 196 112, 194 148, 180 178 C 168 198, 154 204, 142 204 C 130 204, 116 198, 104 178 C 90 148, 88 112, 100 86 Z" 
+                              stroke="rgba(192, 132, 252, 0.7)" stroke-width="1.8" fill="rgba(192, 132, 252, 0.05)" 
+                              class="filter drop-shadow-[0_0_12px_rgba(192,132,252,0.6)] transition-all duration-300" />
+                    </svg>
+
+                    <!-- Status Pill & Camera Switch Controls -->
+                    <div class="absolute top-2.5 inset-x-0 flex items-center justify-between px-3 z-[15] pointer-events-auto">
+                        <div id="cameraStatusPill" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/75 backdrop-blur-md border border-white/15 text-[11px] font-medium text-slate-200 shadow-sm">
+                            <span id="cameraStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            <span id="cameraStatusText">Camera Off</span>
+                        </div>
+                        <button type="button" onclick="toggleWebcam()" id="webcamToggleBtn" title="Start or Stop Live Camera" class="px-2.5 py-1 rounded-full bg-slate-900/75 hover:bg-slate-900/95 backdrop-blur-md border border-white/15 text-[11px] font-medium text-slate-200 hover:text-white transition-all flex items-center gap-1 cursor-pointer shadow-sm">
+                            <i id="webcamToggleIcon" class="ph ph-camera text-xs"></i>
+                            <span id="webcamToggleText">Start Camera</span>
+                        </button>
+                    </div>
+
+                    <!-- Biometric Feedback Banner (Accurately declares backend face recognition required) -->
+                    <div id="biometricFeedbackModal" class="hidden absolute inset-x-3 bottom-3 p-3 rounded-xl bg-slate-900/95 backdrop-blur-lg border border-slate-700 shadow-2xl z-[20] flex items-center gap-3 animate-fade-in text-white text-left">
+                        <div id="biometricFeedbackIconWrap" class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 text-indigo-400">
+                            <i id="biometricFeedbackIcon" class="ph ph-spinner-gap text-xl animate-spin"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p id="biometricFeedbackTitle" class="text-xs font-bold text-white tracking-wide uppercase">Face Detection</p>
+                            <p id="biometricFeedbackSubtitle" class="text-[11px] text-slate-300 truncate">Backend face recognition required.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Hidden Django Form Submission for POST Face Verification / Attendance / Enrollment -->
+            <form id="faceActionForm" method="post" action="{% url 'face_login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" id="faceFormActionType" value="signin">
+                <input type="hidden" name="identifier" id="faceFormIdentifier" value="">
+                <input type="hidden" name="face_data" id="faceFormEmbeddingData" value="">
+                <input type="hidden" name="face_image" id="faceFormImage" value="">
+                <input type="hidden" name="latitude" id="faceFormLatitude" value="">
+                <input type="hidden" name="longitude" id="faceFormLongitude" value="">
+                <input type="hidden" name="accuracy" id="faceFormAccuracy" value="">
+            </form>
+
+            <!-- =================================================================
+                 ACTION CONTROLS (Dynamically toggled for Login vs Enrollment)
+                 ================================================================= -->
+            <div class="w-full max-w-[340px] sm:max-w-[370px] mt-6 space-y-3">
+                
+                <!-- NORMAL MODE CONTROLS: Sign In & Punch Attendance -->
+                <div id="loginActionsBlock" class="space-y-3 w-full">
+                    {% if not request.user.is_authenticated %}
+                    <div class="w-full text-left">
+                        <label for="accountIdentifierInput" class="block text-xs font-semibold text-slate-700 mb-1">Account Email or Username</label>
+                        <input 
+                            type="text" 
+                            id="accountIdentifierInput" 
+                            name="account_identifier" 
+                            placeholder="Enter your registered email or username" 
+                            class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 text-slate-800 transition-all placeholder:text-slate-400"
+                        />
+                    </div>
+                    {% endif %}
+                    <div class="grid grid-cols-2 gap-3.5 w-full">
+                        <button 
+                            type="button" 
+                            id="btnFaceSignIn"
+                            onclick="executeFaceAction('signin')" 
+                            class="w-full flex justify-center items-center py-3 px-4 border border-slate-200/90 rounded-xl shadow-sm text-sm sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all transform active:scale-[0.98] cursor-pointer"
+                        >
+                            Sign In to Dashboard
+                        </button>
+                        <button 
+                            type="button" 
+                            id="btnFacePunch"
+                            onclick="executeFaceAction('punch')" 
+                            class="w-full flex justify-center items-center py-3 px-4 border border-slate-900 rounded-xl shadow-md text-sm sm:text-base font-semibold text-white bg-[#0e1320] hover:bg-[#182033] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all transform active:scale-[0.98] cursor-pointer"
+                        >
+                            Punch Attendance
+                        </button>
+                    </div>
+
+                    <!-- Return to Password Login Button -->
+                    <a 
+                        href="{% url 'login' %}" 
+                        class="w-full flex justify-center items-center py-3.5 px-4 border border-[#48c2b5]/40 rounded-xl shadow-sm text-sm sm:text-base font-semibold text-slate-900 bg-[#61d5cb] hover:bg-[#52ccbf] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#61d5cb] transition-all transform active:scale-[0.99] cursor-pointer"
+                    >
+                        <i class="ph-bold ph-lock-key text-slate-900 text-lg mr-2"></i>
+                        Sign in with Password
+                    </a>
+                </div>
+
+                <!-- ENROLLMENT MODE CONTROLS (Visible when ?mode=enroll) -->
+                <div id="enrollmentActionsBlock" class="hidden space-y-3 w-full">
+                    {% if not request.user.is_authenticated %}
+                    <!-- Security Warning: Unauthenticated user cannot enroll face templates -->
+                    <div class="p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs sm:text-sm flex items-start gap-2.5">
+                        <i class="ph-bold ph-shield-warning text-lg text-rose-600 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="font-bold">Authentication Required</p>
+                            <p class="text-xs text-rose-700 mt-0.5">You must be logged into an existing account to enroll or update your biometric face identity.</p>
+                        </div>
+                    </div>
+                    <a 
+                        href="{% url 'login' %}" 
+                        class="w-full flex justify-center items-center py-3.5 px-4 border border-slate-900 rounded-xl shadow-md text-sm sm:text-base font-semibold text-white bg-[#0e1320] hover:bg-[#182033] transition-all cursor-pointer"
+                    >
+                        <i class="ph-bold ph-sign-in text-lg mr-2"></i>
+                        Sign In to Enroll Face
+                    </a>
+                    {% else %}
+                    <!-- Authenticated User Face Enrollment -->
+                    <button 
+                        type="button" 
+                        id="btnFaceEnroll"
+                        onclick="executeFaceAction('enroll')" 
+                        class="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-teal-500/20 text-sm sm:text-base font-semibold text-slate-900 bg-gradient-to-r from-[#2dd4bf] via-[#5eead4] to-[#38bdf8] hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition-all transform active:scale-[0.99] cursor-pointer"
+                    >
+                        <i class="ph-bold ph-user-focus text-lg mr-2"></i>
+                        Save Face & Continue
+                    </button>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Bottom Disclaimer & Operational Rules Notice -->
+            <div class="text-center mt-4 w-full max-w-[370px]">
+                <p id="modeOperationalHint" class="text-xs text-slate-400 leading-relaxed">
+                    Dashboard sign-in does not record attendance. Attendance punch requires active college GPS geofence validation.
+                </p>
+            </div>
+
+            <!-- Footer Support Link -->
+            <div class="text-center mt-6">
+                <p class="text-sm text-slate-500">
+                    Having trouble? 
+                    <a href="#" onclick="openSupportModal(event)" class="font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors cursor-pointer ml-1">Contact support</a>
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Subtle 4-Point Decorative Star Accent -->
+        <div class="absolute bottom-6 right-8 text-purple-300/40 pointer-events-none select-none text-2xl" aria-hidden="true">
+            ✦
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+         SUPPORT & BIOMETRIC DIAGNOSTICS MODAL
+         ========================================================================= -->
+    <div id="supportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button type="button" onclick="closeSupportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <i class="ph ph-shield-check text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Biometric & GPS Diagnostics</h3>
+                    <p class="text-xs text-slate-500">SVARAABHAVA Enterprise Access</p>
+                </div>
+            </div>
+            <div class="space-y-3 text-sm text-slate-600 my-4">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
+                    <p class="font-semibold text-slate-800">Face Authentication Rules:</p>
+                    <ul class="list-disc list-inside text-slate-500 space-y-1">
+                        <li>Ensure good lighting without harsh backlighting.</li>
+                        <li>Position exactly one face inside the targeting frame.</li>
+                        <li>Multiple faces or occluded faces will be rejected.</li>
+                    </ul>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
+                    <p class="font-semibold text-slate-800">Attendance Geofence Rules:</p>
+                    <ul class="list-disc list-inside text-slate-500 space-y-1">
+                        <li>Attendance is verified using real-time browser GPS coordinates.</li>
+                        <li>Coordinates must fall within the configured campus boundaries.</li>
+                        <li>Mock locations or proxies will be rejected by the server.</li>
+                    </ul>
+                </div>
+            </div>
+            <button type="button" onclick="closeSupportModal()" class="w-full py-2.5 px-4 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all cursor-pointer">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         JAVASCRIPT ENGINE: MediaPipe Detection, Geolocation & Workflows
+         ========================================================================= -->
+    <script>
+        // Detection and Camera Timing State
+        let webcamStream = null;
+        let isWebcamActive = false;
+        let isCameraStarting = false;
+        let isDetectorInitializing = false;
+        let lastDetectionTimestamp = 0;
+        const FRESHNESS_WINDOW_MS = 1500; // Must have received a fresh MediaPipe callback within 1.5s
+        let mediaPipeFaceMesh = null;
+        let cameraUtilsInstance = null;
+        let detectedFacesCount = 0;
+        let lastFaceLandmarks = null;
+        let isProcessingAction = false;
+
+        // Current Mode Detection (?mode=enroll vs default login)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEnrollmentMode = urlParams.get('mode') === 'enroll' || document.body.getAttribute('data-face-mode') === 'enroll';
+
+        // Initialize Page Elements Based on Mode
+        document.addEventListener('DOMContentLoaded', () => {
+            const pageHeading = document.getElementById('pageHeading');
+            const pageSubheading = document.getElementById('pageSubheading');
+            const leftPanelSubBadge = document.getElementById('leftPanelSubBadge');
+            const loginActionsBlock = document.getElementById('loginActionsBlock');
+            const enrollmentActionsBlock = document.getElementById('enrollmentActionsBlock');
+            const modeOperationalHint = document.getElementById('modeOperationalHint');
+
+            if (isEnrollmentMode) {
+                pageHeading.textContent = "Register Your Face";
+                pageSubheading.textContent = "Please align your face to register your biometric identity.";
+                leftPanelSubBadge.textContent = "Face Enrollment";
+                loginActionsBlock.classList.add('hidden');
+                enrollmentActionsBlock.classList.remove('hidden');
+                modeOperationalHint.textContent = "Your facial template will be securely encrypted and linked to your authenticated account profile.";
+            } else {
+                pageHeading.textContent = "Welcome back";
+                pageSubheading.textContent = "Please present your face to sign in.";
+                leftPanelSubBadge.textContent = "Welcome back";
+                loginActionsBlock.classList.remove('hidden');
+                enrollmentActionsBlock.classList.add('hidden');
+            }
+
+            // Pre-populate identifier from URL parameter or localStorage
+            const idInput = document.getElementById('accountIdentifierInput');
+            if (idInput) {
+                const paramId = urlParams.get('email') || urlParams.get('identifier');
+                if (paramId) {
+                    idInput.value = paramId;
+                } else {
+                    try {
+                        const saved = localStorage.getItem('svara_login_email');
+                        if (saved) idInput.value = saved;
+                    } catch(e) {}
+                }
+            }
+
+            // Initialize MediaPipe FaceMesh
+            initMediaPipeFaceMesh();
+        });
+
+        // Initialize MediaPipe FaceMesh (Detector Only - Not Identity Recognition)
+        function initMediaPipeFaceMesh() {
+            try {
+                if (typeof FaceMesh !== 'undefined') {
+                    mediaPipeFaceMesh = new FaceMesh({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+                    });
+
+                    mediaPipeFaceMesh.setOptions({
+                        maxNumFaces: 3,
+                        refineLandmarks: true,
+                        minDetectionConfidence: 0.6,
+                        minTrackingConfidence: 0.6
+                    });
+
+                    mediaPipeFaceMesh.onResults(onMediaPipeResults);
+                } else {
+                    console.warn("MediaPipe FaceMesh library not loaded. Live face tracking requires external script.");
+                    mediaPipeFaceMesh = null;
+                }
+            } catch (err) {
+                console.error("Error initializing MediaPipe FaceMesh:", err);
+                mediaPipeFaceMesh = null;
+            }
+        }
+
+        // Handle MediaPipe Real-Time Results
+        function onMediaPipeResults(results) {
+            // Update detection freshness timestamp
+            lastDetectionTimestamp = Date.now();
+            isDetectorInitializing = false;
+            isCameraStarting = false;
+
+            const overlayCanvas = document.getElementById('faceMeshOverlay');
+            if (!overlayCanvas) return;
+            const ctx = overlayCanvas.getContext('2d');
+            ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+            // True detection count from MediaPipe
+            detectedFacesCount = (results.multiFaceLandmarks && results.multiFaceLandmarks.length) || 0;
+
+            const alertBanner = document.getElementById('faceValidationAlert');
+            const alertText = document.getElementById('faceValidationAlertText');
+            const alertIcon = document.getElementById('faceValidationAlertIcon');
+            const statusDot = document.getElementById('cameraStatusDot');
+            const statusText = document.getElementById('cameraStatusText');
+            const outerBrackets = document.getElementById('outerBrackets');
+            const jawContour = document.getElementById('jawContourPath');
+
+            if (detectedFacesCount === 0) {
+                // Warning: Exactly 0 Faces in Camera Frame
+                lastFaceLandmarks = null;
+                statusText.textContent = "No Face Detected";
+                statusDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
+                alertText.textContent = "No face detected in camera frame. Please align your face inside the targeting box.";
+                alertBanner.classList.remove('hidden');
+
+                outerBrackets.setAttribute('stroke', 'rgba(255, 255, 255, 0.75)');
+                jawContour.setAttribute('stroke', 'rgba(192, 132, 252, 0.7)');
+                jawContour.setAttribute('fill', 'rgba(192, 132, 252, 0.05)');
+
+            } else if (detectedFacesCount > 1) {
+                // Warning: Multiple Faces in Camera Frame
+                lastFaceLandmarks = null;
+                statusText.textContent = `Multiple Faces (${detectedFacesCount})`;
+                statusDot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-users text-lg text-red-500 flex-shrink-0";
+                alertText.textContent = `Multiple faces detected (${detectedFacesCount}). Please ensure only one person is in the frame.`;
+                alertBanner.classList.remove('hidden');
+
+                outerBrackets.setAttribute('stroke', '#ef4444');
+                jawContour.setAttribute('stroke', '#ef4444');
+                jawContour.setAttribute('fill', 'rgba(239, 68, 68, 0.08)');
+
+            } else {
+                // Exactly 1 Face Detected: Positioned & Tracked (Requires Backend for Identity Recognition)
+                lastFaceLandmarks = results.multiFaceLandmarks[0];
+                statusText.textContent = "Face Positioned (1)";
+                statusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                alertBanner.classList.add('hidden');
+
+                outerBrackets.setAttribute('stroke', '#10b981');
+                jawContour.setAttribute('stroke', '#2dd4bf');
+                jawContour.setAttribute('fill', 'rgba(45, 212, 191, 0.12)');
+
+                // Draw subtle mesh landmarks on overlay canvas
+                drawSubtleFaceMesh(ctx, lastFaceLandmarks, overlayCanvas.width, overlayCanvas.height);
+            }
+        }
+
+        // Draw Light Biometric Landmark Overlay on Canvas
+        function drawSubtleFaceMesh(ctx, landmarks, w, h) {
+            ctx.save();
+            ctx.fillStyle = "rgba(45, 212, 191, 0.65)";
+            const sampleIndices = [1, 33, 263, 61, 291, 199, 10, 152];
+            for (const idx of sampleIndices) {
+                const pt = landmarks[idx];
+                if (pt) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x * w, pt.y * h, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
+
+        // Start Live Webcam Video & Detection Loop
+        async function startWebcam() {
+            const videoEl = document.getElementById('faceWebcamFeed');
+            const overlayCanvas = document.getElementById('faceMeshOverlay');
+            const fallbackImg = document.getElementById('faceFallbackImage');
+            const toggleText = document.getElementById('webcamToggleText');
+            const toggleIcon = document.getElementById('webcamToggleIcon');
+            const statusDot = document.getElementById('cameraStatusDot');
+            const statusText = document.getElementById('cameraStatusText');
+            const alertBanner = document.getElementById('faceValidationAlert');
+            const alertText = document.getElementById('faceValidationAlertText');
+            const alertIcon = document.getElementById('faceValidationAlertIcon');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusText.textContent = "Camera Unsupported";
+                statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-camera-slash text-lg text-red-600 flex-shrink-0";
+                alertText.textContent = "Webcam API is not supported in this browser.";
+                alertBanner.classList.remove('hidden');
+                detectedFacesCount = 0;
+                isWebcamActive = false;
+                isCameraStarting = false;
+                isDetectorInitializing = false;
+                return false;
+            }
+
+            try {
+                isCameraStarting = true;
+                isDetectorInitializing = true;
+                lastDetectionTimestamp = 0;
+                detectedFacesCount = 0;
+                lastFaceLandmarks = null;
+
+                statusText.textContent = "Starting Camera...";
+                statusDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+
+                videoEl.srcObject = webcamStream;
+                videoEl.classList.remove('hidden');
+                overlayCanvas.classList.remove('hidden');
+                fallbackImg.classList.add('hidden');
+
+                await videoEl.play();
+
+                overlayCanvas.width = videoEl.videoWidth || 640;
+                overlayCanvas.height = videoEl.videoHeight || 480;
+
+                // Ensure MediaPipe is initialized
+                if (!mediaPipeFaceMesh && typeof FaceMesh !== 'undefined') {
+                    initMediaPipeFaceMesh();
+                }
+
+                if (typeof Camera !== 'undefined' && mediaPipeFaceMesh) {
+                    cameraUtilsInstance = new Camera(videoEl, {
+                        onFrame: async () => {
+                            if (isWebcamActive && mediaPipeFaceMesh) {
+                                try {
+                                    await mediaPipeFaceMesh.send({ image: videoEl });
+                                } catch (frameErr) {
+                                    console.warn("MediaPipe frame send warning:", frameErr);
+                                }
+                            }
+                        },
+                        width: 640,
+                        height: 480
+                    });
+                    cameraUtilsInstance.start();
+                } else {
+                    console.warn("MediaPipe FaceMesh or CameraUtils unavailable.");
+                    statusText.textContent = "Detector Unavailable";
+                    statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph ph-warning-circle text-lg text-red-600 flex-shrink-0";
+                    alertText.textContent = "MediaPipe face detection model failed to load. Biometric verification cannot proceed.";
+                    alertBanner.classList.remove('hidden');
+                    detectedFacesCount = 0;
+                    isCameraStarting = false;
+                    isDetectorInitializing = false;
+                    return false;
+                }
+
+                isWebcamActive = true;
+                toggleText.textContent = 'Stop Camera';
+                toggleIcon.className = 'ph ph-camera-slash text-xs';
+                statusText.textContent = 'Acquiring Face...';
+                statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                return true;
+
+            } catch (err) {
+                console.error("Camera access failed:", err);
+                stopCamera();
+                statusText.textContent = "Camera Denied";
+                statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-camera-slash text-lg text-red-600 flex-shrink-0";
+                alertText.textContent = "Camera access denied or unavailable. A live camera feed is required to authenticate.";
+                alertBanner.classList.remove('hidden');
+                detectedFacesCount = 0;
+                isWebcamActive = false;
+                isCameraStarting = false;
+                isDetectorInitializing = false;
+                return false;
+            }
+        }
+
+        // Clean Camera Shutdown & Track Release
+        function stopCamera() {
+            if (cameraUtilsInstance) {
+                try { cameraUtilsInstance.stop(); } catch (e) {}
+                cameraUtilsInstance = null;
+            }
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => {
+                    try { track.stop(); } catch (e) {}
+                });
+                webcamStream = null;
+            }
+            const videoEl = document.getElementById('faceWebcamFeed');
+            if (videoEl) {
+                videoEl.srcObject = null;
+                videoEl.classList.add('hidden');
+            }
+
+            isWebcamActive = false;
+            isCameraStarting = false;
+            isDetectorInitializing = false;
+            lastDetectionTimestamp = 0;
+            detectedFacesCount = 0;
+            lastFaceLandmarks = null;
+
+            const overlayCanvas = document.getElementById('faceMeshOverlay');
+            if (overlayCanvas) {
+                overlayCanvas.classList.add('hidden');
+                const ctx = overlayCanvas.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            }
+
+            const fallbackImg = document.getElementById('faceFallbackImage');
+            if (fallbackImg) fallbackImg.classList.remove('hidden');
+
+            const toggleText = document.getElementById('webcamToggleText');
+            if (toggleText) toggleText.textContent = 'Start Camera';
+            const toggleIcon = document.getElementById('webcamToggleIcon');
+            if (toggleIcon) toggleIcon.className = 'ph ph-camera text-xs';
+            const statusDot = document.getElementById('cameraStatusDot');
+            if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-400';
+            const statusText = document.getElementById('cameraStatusText');
+            if (statusText) statusText.textContent = 'Camera Off';
+
+            const outerBrackets = document.getElementById('outerBrackets');
+            if (outerBrackets) outerBrackets.setAttribute('stroke', 'rgba(255, 255, 255, 0.75)');
+            const jawContour = document.getElementById('jawContourPath');
+            if (jawContour) {
+                jawContour.setAttribute('stroke', 'rgba(192, 132, 252, 0.7)');
+                jawContour.setAttribute('fill', 'rgba(192, 132, 252, 0.05)');
+            }
+        }
+
+        // Live Camera Toggle Lifecycle
+        async function toggleWebcam() {
+            if (isWebcamActive) {
+                stopCamera();
+            } else {
+                await startWebcam();
+            }
+        }
+
+        // Clean up camera streams on page hide or unload
+        window.addEventListener('beforeunload', stopCamera);
+        window.addEventListener('pagehide', stopCamera);
+
+        // Helper to enable/disable action buttons to prevent duplicate submissions
+        function setActionButtonsDisabled(disabled) {
+            const btnSignIn = document.getElementById('btnFaceSignIn');
+            const btnPunch = document.getElementById('btnFacePunch');
+            const btnEnroll = document.getElementById('btnFaceEnroll');
+            if (btnSignIn) {
+                btnSignIn.disabled = disabled;
+                btnSignIn.classList.toggle('opacity-60', disabled);
+                btnSignIn.classList.toggle('cursor-not-allowed', disabled);
+            }
+            if (btnPunch) {
+                btnPunch.disabled = disabled;
+                btnPunch.classList.toggle('opacity-60', disabled);
+                btnPunch.classList.toggle('cursor-not-allowed', disabled);
+            }
+            if (btnEnroll) {
+                btnEnroll.disabled = disabled;
+                btnEnroll.classList.toggle('opacity-60', disabled);
+                btnEnroll.classList.toggle('cursor-not-allowed', disabled);
+            }
+        }
+
+        // =====================================================================
+        // CORE WORKFLOW HANDLER: Sign In vs Punch Attendance vs Enrollment
+        // =====================================================================
+        async function executeFaceAction(actionType) {
+            // Prevent duplicate submissions
+            if (isProcessingAction) return;
+
+            const alertBanner = document.getElementById('faceValidationAlert');
+            const alertText = document.getElementById('faceValidationAlertText');
+            const alertIcon = document.getElementById('faceValidationAlertIcon');
+            const scanBeam = document.getElementById('scanLaserBeam');
+            const feedbackModal = document.getElementById('biometricFeedbackModal');
+            const feedbackTitle = document.getElementById('biometricFeedbackTitle');
+            const feedbackSubtitle = document.getElementById('biometricFeedbackSubtitle');
+            const feedbackIconWrap = document.getElementById('biometricFeedbackIconWrap');
+            const feedbackIcon = document.getElementById('biometricFeedbackIcon');
+
+            // 1. Enrollment Security: Prevent Unauthenticated Users from Enrolling Faces
+            if (actionType === 'enroll') {
+                const isAuth = document.body.getAttribute('data-user-authenticated') === 'true';
+                if (!isAuth) {
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph ph-shield-warning text-lg text-red-600 flex-shrink-0";
+                    alertText.textContent = "Unauthorized: You must be logged into an existing account to enroll or update your biometric face identity.";
+                    alertBanner.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            // 2. Camera Must Be Active: Block If Camera Is Not Running
+            if (!isWebcamActive || !webcamStream) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-camera text-lg text-indigo-600 flex-shrink-0";
+                alertText.textContent = "Activating live camera... Please allow camera access and position your face.";
+                alertBanner.classList.remove('hidden');
+
+                const started = await startWebcam();
+                if (!started) return;
+
+                alertText.textContent = "Camera started. Detecting face, please position your face in the scanner...";
+                return;
+            }
+
+            // 3. MediaPipe Detector Must Be Active
+            if (!mediaPipeFaceMesh) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-warning-circle text-lg text-red-600 flex-shrink-0";
+                alertText.textContent = "Face detection model is not loaded. Cannot proceed with authentication.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            // 4. Timing & Detection Initialization Check: Block Submission While Initializing
+            if (isCameraStarting || isDetectorInitializing) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-spinner text-lg text-amber-600 animate-spin flex-shrink-0";
+                alertText.textContent = "Face detector is acquiring frame... Please hold still.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            // 5. Freshness Check: Reject Stale / Outdated Detection Results
+            const now = Date.now();
+            const resultAge = now - lastDetectionTimestamp;
+            if (lastDetectionTimestamp === 0 || resultAge > FRESHNESS_WINDOW_MS) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-warning-circle text-lg text-red-600 flex-shrink-0";
+                alertText.textContent = "Detection stream stalled or stopped. Please ensure camera feed is running and unobstructed.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            // 6. Strictly Require Exactly One Currently Detected Face
+            if (detectedFacesCount === 0) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
+                alertText.textContent = "Cannot proceed: No face currently detected. Please position your face inside the targeting frame.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+            if (detectedFacesCount > 1) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-users text-lg text-red-500 flex-shrink-0";
+                alertText.textContent = `Cannot proceed: Multiple faces detected (${detectedFacesCount}). Exactly one person must be in view.`;
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            if (!lastFaceLandmarks) {
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
+                alertText.textContent = "Facial coordinates not yet acquired. Please hold still.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            // 7. Capture Live Camera Image Frame Snapshot (Biometric input for backend ArcFace model)
+            feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center flex-shrink-0 text-teal-400";
+            feedbackIcon.className = "ph ph-spinner-gap text-xl animate-spin";
+            feedbackTitle.textContent = "Capturing face...";
+            feedbackSubtitle.textContent = "Acquiring live camera snapshot...";
+            feedbackModal.classList.remove('hidden');
+
+            const biometricPayload = captureBiometricPayload();
+            if (!biometricPayload || !biometricPayload.face_image) {
+                feedbackModal.classList.add('hidden');
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-camera-slash text-lg text-red-600 flex-shrink-0";
+                alertText.textContent = "Failed to capture live face image from camera stream.";
+                alertBanner.classList.remove('hidden');
+                return;
+            }
+
+            isProcessingAction = true;
+            setActionButtonsDisabled(true);
+            scanBeam.classList.add('fast-scan');
+
+            // 8. Workflow Routing
+            let accountIdentifier = urlParams.get('email') || urlParams.get('identifier') || '';
+            const typedIdInput = document.getElementById('accountIdentifierInput');
+            if (typedIdInput && typedIdInput.value.trim()) {
+                accountIdentifier = typedIdInput.value.trim();
+                try { localStorage.setItem('svara_login_email', accountIdentifier); } catch(e){}
+            }
+            const hiddenIdInput = document.getElementById('faceFormIdentifier');
+            if (!accountIdentifier && hiddenIdInput && hiddenIdInput.value.trim()) {
+                accountIdentifier = hiddenIdInput.value.trim();
+            }
+            if (!accountIdentifier && typeof localStorage !== 'undefined') {
+                accountIdentifier = localStorage.getItem('svara_login_email') || '';
+            }
+
+            const isUserAuth = document.body.getAttribute('data-user-authenticated') === 'true';
+
+            if (actionType === 'signin') {
+                // SIGN IN TO DASHBOARD WORKFLOW
+                if (!accountIdentifier && !isUserAuth) {
+                    feedbackModal.classList.add('hidden');
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
+                    alertText.textContent = "Please enter your account email or username to sign in with face.";
+                    alertBanner.classList.remove('hidden');
+                    isProcessingAction = false;
+                    setActionButtonsDisabled(false);
+                    scanBeam.classList.remove('fast-scan');
+                    if (typedIdInput) typedIdInput.focus();
+                    return;
+                }
+
+                // Step: Extracting face...
+                feedbackTitle.textContent = "Extracting face...";
+                feedbackSubtitle.textContent = "Extracting ArcFace numerical feature embedding...";
+                await new Promise(r => setTimeout(r, 200));
+
+                // Step: Verifying identity...
+                feedbackTitle.textContent = "Verifying identity...";
+                feedbackSubtitle.textContent = "Comparing face with enrolled biometric template...";
+
+                await submitFaceRequest({
+                    action_type: 'signin',
+                    identifier: accountIdentifier,
+                    face_image: biometricPayload.face_image,
+                    bounding_box: biometricPayload.bounding_box,
+                    landmarks_count: biometricPayload.landmarks_count,
+                    timestamp: biometricPayload.timestamp
+                });
+                return;
+
+            } else if (actionType === 'punch') {
+                // PUNCH ATTENDANCE WORKFLOW: Verify face + GPS geofence without creating a login session
+                if (!accountIdentifier && !isUserAuth) {
+                    feedbackModal.classList.add('hidden');
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
+                    alertText.textContent = "Please enter your account email or username to punch attendance.";
+                    alertBanner.classList.remove('hidden');
+                    isProcessingAction = false;
+                    setActionButtonsDisabled(false);
+                    scanBeam.classList.remove('fast-scan');
+                    if (typedIdInput) typedIdInput.focus();
+                    return;
+                }
+
+                // Step: Getting GPS location...
+                feedbackTitle.textContent = "Getting GPS location...";
+                feedbackSubtitle.textContent = "Acquiring GPS coordinates from browser Geolocation API...";
+                feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 text-indigo-400";
+                feedbackIcon.className = "ph ph-crosshair text-xl animate-spin";
+
+                let geo = null;
+                try {
+                    geo = await obtainBrowserGeolocation();
+                } catch (geoErr) {
+                    scanBeam.classList.remove('fast-scan');
+                    isProcessingAction = false;
+                    setActionButtonsDisabled(false);
+                    feedbackModal.classList.add('hidden');
+
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph ph-crosshair-simple text-lg text-rose-600 flex-shrink-0";
+                    alertText.textContent = geoErr.message || "GPS location permission required for attendance verification.";
+                    alertBanner.classList.remove('hidden');
+                    return;
+                }
+
+                // Step: Extracting face...
+                feedbackTitle.textContent = "Extracting face...";
+                feedbackSubtitle.textContent = "Extracting ArcFace numerical feature embedding...";
+                feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center flex-shrink-0 text-teal-400";
+                feedbackIcon.className = "ph ph-spinner-gap text-xl animate-spin";
+                await new Promise(r => setTimeout(r, 200));
+
+                // Step: Verifying identity...
+                feedbackTitle.textContent = "Verifying identity...";
+                feedbackSubtitle.textContent = "Comparing face with enrolled biometric template...";
+                await new Promise(r => setTimeout(r, 200));
+
+                // Step: Checking campus location...
+                feedbackTitle.textContent = "Checking campus location...";
+                feedbackSubtitle.textContent = "Verifying presence within college campus geofence...";
+                await new Promise(r => setTimeout(r, 200));
+
+                // Step: Checking attendance...
+                feedbackTitle.textContent = "Checking attendance...";
+                feedbackSubtitle.textContent = "Validating attendance records...";
+
+                await submitFaceRequest({
+                    action_type: 'punch',
+                    identifier: accountIdentifier,
+                    face_image: biometricPayload.face_image,
+                    latitude: geo.latitude,
+                    longitude: geo.longitude,
+                    accuracy: geo.accuracy,
+                    bounding_box: biometricPayload.bounding_box,
+                    landmarks_count: biometricPayload.landmarks_count,
+                    timestamp: biometricPayload.timestamp
+                });
+                return;
+
+            } else if (actionType === 'enroll') {
+                // FACE ENROLLMENT WORKFLOW: Registers Biometric Template on Backend
+                feedbackTitle.textContent = "Extracting face...";
+                feedbackSubtitle.textContent = "Extracting ArcFace embedding and encrypting biometric template...";
+                feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center flex-shrink-0 text-teal-400";
+                feedbackIcon.className = "ph ph-spinner-gap text-xl animate-spin";
+
+                await submitFaceRequest({
+                    action_type: 'enroll',
+                    face_image: biometricPayload.face_image,
+                    bounding_box: biometricPayload.bounding_box,
+                    landmarks_count: biometricPayload.landmarks_count,
+                    timestamp: biometricPayload.timestamp
+                });
+            }
+        }
+
+        // Obtain Real Browser GPS Coordinates (Mandatory for attendance)
+        function obtainBrowserGeolocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation is not supported by your browser."));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        resolve({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy
+                        });
+                    },
+                    (err) => {
+                        let msg = "GPS location permission denied.";
+                        if (err.code === err.POSITION_UNAVAILABLE) msg = "GPS location information is unavailable.";
+                        if (err.code === err.TIMEOUT) msg = "GPS location request timed out.";
+                        reject(new Error(msg));
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            });
+        }
+
+        // Extract Real Video Frame Snapshot from Webcam Feed
+        function captureBiometricPayload() {
+            const videoEl = document.getElementById('faceWebcamFeed');
+            if (!isWebcamActive || !videoEl || videoEl.videoWidth === 0) {
+                return null;
+            }
+
+            // Capture raw high-resolution frame from live webcam feed
+            const canvas = document.createElement('canvas');
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            const imageBase64 = canvas.toDataURL('image/jpeg', 0.92);
+
+            // Compute facial bounding box from verified MediaPipe landmarks to assist backend alignment
+            let boundingBox = null;
+            if (lastFaceLandmarks && lastFaceLandmarks.length > 0) {
+                let minX = 1, maxX = 0, minY = 1, maxY = 0;
+                for (let i = 0; i < lastFaceLandmarks.length; i++) {
+                    const pt = lastFaceLandmarks[i];
+                    if (pt.x < minX) minX = pt.x;
+                    if (pt.x > maxX) maxX = pt.x;
+                    if (pt.y < minY) minY = pt.y;
+                    if (pt.y > maxY) maxY = pt.y;
+                }
+                boundingBox = {
+                    x: Math.max(0, Math.round(minX * canvas.width)),
+                    y: Math.max(0, Math.round(minY * canvas.height)),
+                    width: Math.min(canvas.width, Math.round((maxX - minX) * canvas.width)),
+                    height: Math.min(canvas.height, Math.round((maxY - minY) * canvas.height))
+                };
+            }
+
+            return {
+                face_image: imageBase64,
+                bounding_box: boundingBox,
+                landmarks_count: lastFaceLandmarks ? lastFaceLandmarks.length : 0,
+                recognition_model_client: null, // Explicit declaration: no client-side ArcFace/FaceNet model loaded
+                timestamp: Date.now()
+            };
+        }
+
+        // Helper: Extract Django CSRF Token
+        function getCsrfToken() {
+            const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (input && input.value) return input.value;
+            const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            return cookie ? cookie.split('=')[1] : '';
+        }
+
+        // =====================================================================
+        // SUBMIT FACE ACTION TO DJANGO BACKEND
+        // =====================================================================
+        async function submitFaceRequest(payload) {
+            let targetUrl = "{% url 'face_login_api' %}";
+            if (payload.action_type === 'enroll') {
+                targetUrl = "{% url 'face_enroll_api' %}";
+            } else if (payload.action_type === 'punch') {
+                targetUrl = "{% url 'face_attendance_api' %}";
+            }
+
+            const csrfToken = getCsrfToken();
+            const scanBeam = document.getElementById('scanLaserBeam');
+            const feedbackModal = document.getElementById('biometricFeedbackModal');
+            const feedbackTitle = document.getElementById('biometricFeedbackTitle');
+            const feedbackSubtitle = document.getElementById('biometricFeedbackSubtitle');
+            const feedbackIconWrap = document.getElementById('biometricFeedbackIconWrap');
+            const feedbackIcon = document.getElementById('biometricFeedbackIcon');
+            const alertBanner = document.getElementById('faceValidationAlert');
+            const alertText = document.getElementById('faceValidationAlertText');
+            const alertIcon = document.getElementById('faceValidationAlertIcon');
+
+            // Construct FormData payload
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            formData.append('action_type', payload.action_type || 'signin');
+            if (payload.identifier) {
+                formData.append('identifier', payload.identifier);
+            }
+            if (payload.latitude != null) {
+                formData.append('latitude', payload.latitude);
+            }
+            if (payload.longitude != null) {
+                formData.append('longitude', payload.longitude);
+            }
+            if (payload.accuracy != null) {
+                formData.append('accuracy', payload.accuracy);
+            }
+            if (payload.re_enroll) {
+                formData.append('re_enroll', 'true');
+            }
+            formData.append('face_image', payload.face_image || '');
+            formData.append('face_data', JSON.stringify({
+                bounding_box: payload.bounding_box || null,
+                landmarks_count: payload.landmarks_count || 0,
+                recognition_model_client: null,
+                timestamp: payload.timestamp || Date.now()
+            }));
+
+            try {
+                const response = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                scanBeam.classList.remove('fast-scan');
+
+                // Response MUST be valid JSON - never accept HTML or standard redirect
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (parseErr) {
+                    throw new Error("Invalid response format: Expected JSON verification payload from Django backend face recognition service.");
+                }
+
+                // Handle HTTP errors or backend rejections
+                if (!response.ok || !data || data.success !== true) {
+                    // Check for duplicate enrollment confirmation
+                    if (data && data.code === 'already_enrolled' && payload.action_type === 'enroll' && !payload.re_enroll) {
+                        isProcessingAction = false;
+                        setActionButtonsDisabled(false);
+                        if (confirm("You already have an active biometric face template enrolled. Would you like to update/re-enroll your face?")) {
+                            return await submitFaceRequest({
+                                ...payload,
+                                re_enroll: true
+                            });
+                        }
+                    }
+                    const errorMsg = (data && (data.error || data.message)) || `Server returned error status (HTTP ${response.status}).`;
+                    throw new Error(errorMsg);
+                }
+
+                // SIGN IN SUCCESS
+                if (payload.action_type === 'signin') {
+                    feedbackTitle.textContent = "Signing in...";
+                    feedbackSubtitle.textContent = data.message || "Identity verified. Signing in to dashboard...";
+                    feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center flex-shrink-0 text-emerald-400";
+                    feedbackIcon.className = "ph-fill ph-check-circle text-xl";
+                    feedbackModal.classList.remove('hidden');
+
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph-fill ph-check-circle text-lg text-emerald-600 flex-shrink-0";
+                    alertText.textContent = data.message || "Identity verified. Signing in...";
+                    alertBanner.classList.remove('hidden');
+
+                    stopCamera();
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || "/dashboard/";
+                    }, 1000);
+                    return;
+
+                // ATTENDANCE SUCCESS
+                } else if (payload.action_type === 'punch') {
+                    const isAlready = data.attendance_status === 'already_recorded';
+                    const successMsg = isAlready ? "Attendance already recorded." : "Attendance recorded successfully.";
+                    feedbackTitle.textContent = successMsg;
+                    feedbackSubtitle.textContent = data.message || successMsg;
+                    feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center flex-shrink-0 text-emerald-400";
+                    feedbackIcon.className = "ph-fill ph-check-circle text-xl";
+                    feedbackModal.classList.remove('hidden');
+
+                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                    alertIcon.className = "ph-fill ph-check-circle text-lg text-emerald-600 flex-shrink-0";
+                    alertText.textContent = successMsg;
+                    alertBanner.classList.remove('hidden');
+
+                    isProcessingAction = false;
+                    setActionButtonsDisabled(false);
+
+                    setTimeout(() => {
+                        feedbackModal.classList.add('hidden');
+                    }, 3500);
+                    return;
+
+                // ENROLLMENT SUCCESS
+                } else if (payload.action_type === 'enroll') {
+                    if (!data.redirect_url || typeof data.redirect_url !== 'string') {
+                        throw new Error("Enrollment confirmed by backend, but no valid redirect URL was provided by server.");
+                    }
+
+                    feedbackTitle.textContent = "Enrollment Confirmed";
+                    feedbackSubtitle.textContent = data.message || "Facial template registered in MongoDB. Redirecting...";
+                    feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center flex-shrink-0 text-teal-400";
+                    feedbackIcon.className = "ph-fill ph-user-focus text-xl";
+                    feedbackModal.classList.remove('hidden');
+
+                    stopCamera();
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || "/dashboard/";
+                    }, 1000);
+                }
+
+            } catch (err) {
+                console.error("Face action request failed:", err);
+                scanBeam.classList.remove('fast-scan');
+                isProcessingAction = false;
+                setActionButtonsDisabled(false);
+
+                let displayTitle = "Face verification failed.";
+                let displayMsg = err.message || "Face verification failed.";
+
+                if (payload.action_type === 'signin') {
+                    displayTitle = "Face verification failed.";
+                    displayMsg = "Face verification failed.";
+                } else if (payload.action_type === 'punch') {
+                    const errLower = (err.message || "").toLowerCase();
+                    if (errLower.includes("outside") || errLower.includes("geofence") || errLower.includes("away from college") || errLower.includes("permitted campus area")) {
+                        displayTitle = "Outside permitted campus area.";
+                        displayMsg = "Outside permitted campus area.";
+                    } else if (errLower.includes("mismatch") || errLower.includes("failed") || errLower.includes("did not match") || errLower.includes("verification failed")) {
+                        displayTitle = "Face verification failed.";
+                        displayMsg = "Face verification failed.";
+                    } else {
+                        displayTitle = "Face verification failed.";
+                        displayMsg = err.message || "Face verification failed.";
+                    }
+                } else {
+                    displayTitle = "Enrollment Failed";
+                    displayMsg = err.message || "Face enrollment could not be completed.";
+                }
+
+                feedbackTitle.textContent = displayTitle;
+                feedbackSubtitle.textContent = displayMsg;
+                feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/40 flex items-center justify-center flex-shrink-0 text-rose-400";
+                feedbackIcon.className = "ph-fill ph-x-circle text-xl";
+                feedbackModal.classList.remove('hidden');
+
+                alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
+                alertIcon.className = "ph ph-x-circle text-lg text-rose-600 flex-shrink-0";
+                alertText.textContent = displayMsg;
+                alertBanner.classList.remove('hidden');
+
+                setTimeout(() => {
+                    feedbackModal.classList.add('hidden');
+                }, 3500);
+            }
+        }
+
+        // Support Modal Controls
+        function openSupportModal(e) {
+            if (e) e.preventDefault();
+            document.getElementById('supportModal').classList.remove('hidden');
+        }
+
+        function closeSupportModal() {
+            document.getElementById('supportModal').classList.add('hidden');
+        }
+
+        // Interactive Slogan Wave Canvas Animation
+        (function() {
+            const canvas = document.getElementById('slogan-wave-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const headingEl = document.getElementById('slogan-heading');
+            const line1El = document.getElementById('slogan-line-1');
+            const line2El = document.getElementById('slogan-line-2');
+
+            const slogans = [
+                {
+                    line1: "The feelings of the mind",
+                    line2: "are reflected in the voice.",
+                    sizeClass: "text-3xl sm:text-4xl lg:text-[2.75rem]",
+                    holdTime: 5000,
+                    glowClass: "from-[#2dd4bf] via-[#38bdf8] to-[#22d3ee]",
+                    dropShadow: "drop-shadow-[0_0_28px_rgba(45,212,191,0.45)]"
+                },
+                {
+                    line1: "Speech is a",
+                    line2: "mirror of emotion.",
+                    sizeClass: "text-4xl sm:text-5xl lg:text-[3.25rem]",
+                    holdTime: 4000,
+                    glowClass: "from-[#2dd4bf] via-[#818cf8] to-[#c084fc]",
+                    dropShadow: "drop-shadow-[0_0_28px_rgba(45,212,191,0.35)]"
+                }
+            ];
+
+            let sloganIndex = 0;
+            let currentSloganState = 'holding';
+            let stateStartTime = performance.now();
+            let width = 0;
+            let height = 0;
+            let dpr = 1;
+
+            function resize() {
+                const parent = canvas.parentElement;
+                if (!parent) return;
+                const rect = parent.getBoundingClientRect();
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                width = rect.width;
+                height = rect.height;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            const waveLayers = [
+                { baseYRel: 0.62, speed: 0.00075, freq: 0.0035, amp: 36, color1: 'rgba(45, 212, 191, 0.75)', color2: 'rgba(56, 189, 248, 0.65)', shadow: '#2dd4bf', shadowBlur: 16, lineWidth: 2.2, phase: 0.0 },
+                { baseYRel: 0.58, speed: -0.00065, freq: 0.0042, amp: 42, color1: 'rgba(129, 140, 248, 0.70)', color2: 'rgba(192, 132, 252, 0.65)', shadow: '#818cf8', shadowBlur: 18, lineWidth: 1.8, phase: 1.4 }
+            ];
+
+            const waveParticles = [];
+            for (let i = 0; i < 24; i++) {
+                waveParticles.push({
+                    layerIndex: i % waveLayers.length,
+                    x: Math.random() * 800,
+                    speed: 0.6 + Math.random() * 1.0,
+                    size: 1.5 + Math.random() * 2,
+                    alpha: 0.4 + Math.random() * 0.5,
+                    pulse: Math.random() * Math.PI * 2
+                });
+            }
+
+            function getWaveY(layer, x, time) {
+                const baseY = height * layer.baseYRel;
+                return baseY + Math.sin(x * layer.freq + time * layer.speed + layer.phase) * layer.amp;
+            }
+
+            function updateSloganState(now) {
+                const elapsed = now - stateStartTime;
+                const cur = slogans[sloganIndex];
+
+                if (currentSloganState === 'holding') {
+                    if (elapsed >= cur.holdTime) {
+                        currentSloganState = 'dissolving';
+                        stateStartTime = now;
+                        headingEl.style.opacity = '0';
+                        headingEl.style.transform = 'translateY(-10px)';
+                        headingEl.style.filter = 'blur(6px)';
+                    }
+                } else if (currentSloganState === 'dissolving') {
+                    if (elapsed >= 700) {
+                        currentSloganState = 'gap';
+                        stateStartTime = now;
+                        sloganIndex = (sloganIndex + 1) % slogans.length;
+                    }
+                } else if (currentSloganState === 'gap') {
+                    if (elapsed >= 400) {
+                        const nextSlogan = slogans[sloganIndex];
+                        line1El.textContent = nextSlogan.line1;
+                        line2El.textContent = nextSlogan.line2;
+                        headingEl.className = `font-extrabold leading-[1.14] tracking-tight text-white transition-all duration-700 ease-out ${nextSlogan.sizeClass}`;
+                        line2El.className = `block bg-gradient-to-r ${nextSlogan.glowClass} bg-clip-text text-transparent ${nextSlogan.dropShadow}`;
+                        headingEl.style.opacity = '1';
+                        headingEl.style.transform = 'translateY(0)';
+                        headingEl.style.filter = 'blur(0px)';
+                        currentSloganState = 'holding';
+                        stateStartTime = now;
+                    }
+                }
+            }
+
+            function animate(time) {
+                ctx.clearRect(0, 0, width, height);
+                updateSloganState(time);
+
+                for (let i = 0; i < waveLayers.length; i++) {
+                    const layer = waveLayers[i];
+                    ctx.save();
+                    ctx.beginPath();
+                    const step = 8;
+                    const firstY = getWaveY(layer, 0, time);
+                    ctx.moveTo(0, firstY);
+                    for (let x = step; x <= width + step; x += step) {
+                        const y = getWaveY(layer, x, time);
+                        ctx.lineTo(x, y);
+                    }
+                    const grad = ctx.createLinearGradient(0, 0, width, 0);
+                    grad.addColorStop(0, layer.color1);
+                    grad.addColorStop(1, layer.color2);
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = layer.lineWidth;
+                    ctx.lineCap = 'round';
+                    ctx.shadowColor = layer.shadow;
+                    ctx.shadowBlur = layer.shadowBlur;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                for (let i = 0; i < waveParticles.length; i++) {
+                    const p = waveParticles[i];
+                    p.x += p.speed;
+                    if (p.x > width + 20) p.x = -20;
+                    const layer = waveLayers[p.layerIndex];
+                    const py = getWaveY(layer, p.x, time);
+                    p.pulse += 0.04;
+                    const curSize = p.size * (0.85 + Math.sin(p.pulse) * 0.25);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(p.x, py, curSize, 0, Math.PI * 2);
+                    ctx.fillStyle = layer.shadow;
+                    ctx.shadowColor = layer.shadow;
+                    ctx.shadowBlur = 10;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+        })();
+    </script>
+</body>
+</html>

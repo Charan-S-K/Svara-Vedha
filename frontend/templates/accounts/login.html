@@ -301,9 +301,9 @@
    class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
     <i class="ph-fill ph-google-logo text-xl mr-2 text-red-500"></i> Google
 </a>
-                        <button type="button" onclick="switchView('view-forgot')" class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-purple-200 rounded-xl shadow-sm bg-purple-50/70 text-sm font-medium text-purple-700 hover:bg-purple-100/80 transition-colors cursor-pointer">
+                        <a href="{% url 'face_login' %}" onclick="if (document.getElementById('email')) { const em = document.getElementById('email').value.trim(); if (em) { try { localStorage.setItem('svara_login_email', em); } catch(e){} this.href = '{% url 'face_login' %}?email=' + encodeURIComponent(em); } }" class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-purple-200 rounded-xl shadow-sm bg-purple-50/70 text-sm font-medium text-purple-700 hover:bg-purple-100/80 transition-colors cursor-pointer">
                             <i class="ph ph-sparkle text-xl mr-2 text-purple-600"></i> Magic Link
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>

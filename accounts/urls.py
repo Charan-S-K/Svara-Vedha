@@ -42,4 +42,29 @@ path(
     name="create_reset_password"
 ),
 path("logout/", views.logout_view, name="logout"),
+path(
+    "face-login/",
+    views.face_login,
+    name="face_login"
+),
+path(
+    "face-enroll/",
+    views.face_enroll_page,
+    name="face_enroll"
+),
+path(
+    "api/face/enroll/",
+    views.face_enroll_api,
+    name="face_enroll_api"
+),
+path(
+    "api/face/login/",
+    views.face_login_api,
+    name="face_login_api"
+),
+path(
+    "api/face/attendance/",
+    views.face_attendance_api,
+    name="face_attendance_api"
+),
 ]

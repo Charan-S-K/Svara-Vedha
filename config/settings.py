@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -89,16 +90,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-       "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+           "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
+        }
+    }
 
 
 # Password validation
@@ -181,3 +190,47 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 LOGIN_REDIRECT_URL = "/dashboard/"
+
+# ==============================================================================
+# SVARAABHAVA — Biometric Face Recognition & Verification Settings
+# ==============================================================================
+INSIGHTFACE_MODEL_NAME = os.getenv("INSIGHTFACE_MODEL_NAME", "buffalo_l")
+INSIGHTFACE_ROOT = os.getenv("INSIGHTFACE_ROOT", str(BASE_DIR / "models" / ".insightface"))
+INSIGHTFACE_PROVIDERS = ["CPUExecutionProvider"]
+INSIGHTFACE_DET_SIZE = (640, 640)
+
+# ArcFace Cosine Similarity Threshold
+# NOTE: 0.50 is an initial development baseline. Production deployment requires
+# calibration against genuine and impostor probe distributions to set target FAR/FRR.
+FACE_SIMILARITY_THRESHOLD = float(os.getenv("FACE_SIMILARITY_THRESHOLD", "0.50"))
+
+# Face Template Storage Backend
+# Automatically resolves to MongoFaceRepository when MONGODB_URI is provided.
+FACE_STORAGE_BACKEND = os.getenv("FACE_STORAGE_BACKEND", None)
+MONGODB_URI = os.getenv("MONGODB_URI", None)
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "svaraabhava_biometrics")
+MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION", "face_templates")
+MONGODB_ATTENDANCE_COLLECTION = os.getenv("MONGODB_ATTENDANCE_COLLECTION", "attendance_records")
+
+# Application-level Encryption Secret for Face Templates (Fernet 32-byte key)
+BIOMETRIC_ENCRYPTION_KEY = os.getenv("BIOMETRIC_ENCRYPTION_KEY", os.getenv("FACE_ENCRYPTION_KEY", None))
+FACE_ENCRYPTION_KEY = BIOMETRIC_ENCRYPTION_KEY
+
+# Development Inspection Mode (controls complete vector display on face page)
+FACE_DEV_MODE = os.getenv("FACE_DEV_MODE", "true").lower() in ("true", "1", "yes")
+
+# Image Validation Limits
+MAX_FACE_IMAGE_SIZE_BYTES = int(os.getenv("MAX_FACE_IMAGE_SIZE_BYTES", str(10 * 1024 * 1024)))
+MIN_FACE_IMAGE_SIZE_BYTES = int(os.getenv("MIN_FACE_IMAGE_SIZE_BYTES", "512"))
+MIN_FACE_IMAGE_DIMENSION = int(os.getenv("MIN_FACE_IMAGE_DIMENSION", "128"))
+MAX_FACE_IMAGE_DIMENSION = int(os.getenv("MAX_FACE_IMAGE_DIMENSION", "4096"))
+MIN_FACE_BOUNDING_SIZE = float(os.getenv("MIN_FACE_BOUNDING_SIZE", "60.0"))
+FACE_BLUR_THRESHOLD = float(os.getenv("FACE_BLUR_THRESHOLD", "15.0"))
+FACE_MIN_BRIGHTNESS = float(os.getenv("FACE_MIN_BRIGHTNESS", "25.0"))
+FACE_MAX_BRIGHTNESS = float(os.getenv("FACE_MAX_BRIGHTNESS", "235.0"))
+
+# College Geofence Coordinates & Validation Parameters for Attendance
+COLLEGE_GEOFENCE_LATITUDE = float(os.getenv("COLLEGE_GEOFENCE_LATITUDE", "17.385044"))
+COLLEGE_GEOFENCE_LONGITUDE = float(os.getenv("COLLEGE_GEOFENCE_LONGITUDE", "78.486671"))
+COLLEGE_GEOFENCE_RADIUS_METERS = float(os.getenv("COLLEGE_GEOFENCE_RADIUS_METERS", "500.0"))
+MAX_ALLOWED_GPS_ACCURACY_METERS = float(os.getenv("MAX_ALLOWED_GPS_ACCURACY_METERS", "100.0"))

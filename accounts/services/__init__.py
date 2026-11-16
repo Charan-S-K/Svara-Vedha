@@ -1,0 +1,109 @@
+"""
+Face recognition and validation services for SVARAABHAVA accounts.
+"""
+
+from .face_validation import (
+    FaceValidationError,
+    InvalidImageFormatError,
+    ImageDecodeError,
+    NoFaceDetectedError,
+    MultipleFacesDetectedError,
+    FaceTooSmallError,
+    ImageQualityError,
+    preprocess_and_validate_image,
+    validate_face_count,
+    validate_face_size,
+)
+from .face_recognition import (
+    EXPECTED_EMBEDDING_DIM,
+    FaceRecognitionError,
+    InvalidEmbeddingDimensionError,
+    InvalidEmbeddingValueError,
+    FaceRecognitionService,
+    extract_face_embedding,
+)
+from .face_similarity import (
+    DEFAULT_SIMILARITY_THRESHOLD,
+    get_similarity_threshold,
+    calculate_cosine_similarity,
+    compare_face_embeddings,
+    verify_user_face,
+)
+from .geofence import (
+    GeofenceValidationError,
+    haversine_distance_meters,
+    validate_gps_coordinates,
+    verify_college_geofence,
+)
+from .face_storage_interface import (
+    FaceStorageInterface,
+    FaceStorageError,
+    StorageNotConfiguredError,
+    NotConfiguredFaceStorage,
+    InMemoryFaceStorage,
+    get_face_storage,
+    set_face_storage,
+)
+from .mongo_connection import (
+    MongoConnectionError,
+    get_mongo_client,
+    get_biometrics_db,
+    get_face_templates_collection,
+    get_attendance_collection,
+    close_mongo_connection,
+    ping_mongo,
+)
+from .face_repository import (
+    MongoFaceRepository,
+    DuplicateEnrollmentError,
+    TemplateNotFoundError,
+    InactiveTemplateError,
+    get_biometric_cipher,
+)
+
+__all__ = [
+    "FaceValidationError",
+    "InvalidImageFormatError",
+    "ImageDecodeError",
+    "NoFaceDetectedError",
+    "MultipleFacesDetectedError",
+    "FaceTooSmallError",
+    "ImageQualityError",
+    "preprocess_and_validate_image",
+    "validate_face_count",
+    "validate_face_size",
+    "EXPECTED_EMBEDDING_DIM",
+    "FaceRecognitionError",
+    "InvalidEmbeddingDimensionError",
+    "InvalidEmbeddingValueError",
+    "FaceRecognitionService",
+    "extract_face_embedding",
+    "DEFAULT_SIMILARITY_THRESHOLD",
+    "get_similarity_threshold",
+    "calculate_cosine_similarity",
+    "compare_face_embeddings",
+    "verify_user_face",
+    "GeofenceValidationError",
+    "haversine_distance_meters",
+    "validate_gps_coordinates",
+    "verify_college_geofence",
+    "FaceStorageInterface",
+    "FaceStorageError",
+    "StorageNotConfiguredError",
+    "NotConfiguredFaceStorage",
+    "InMemoryFaceStorage",
+    "get_face_storage",
+    "set_face_storage",
+    "MongoConnectionError",
+    "get_mongo_client",
+    "get_biometrics_db",
+    "get_face_templates_collection",
+    "get_attendance_collection",
+    "close_mongo_connection",
+    "ping_mongo",
+    "MongoFaceRepository",
+    "DuplicateEnrollmentError",
+    "TemplateNotFoundError",
+    "InactiveTemplateError",
+    "get_biometric_cipher",
+]
