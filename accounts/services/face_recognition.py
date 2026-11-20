@@ -14,11 +14,14 @@ Never trust or accept facial embeddings or landmarks sent by the client browser.
 All biometric feature extraction MUST be performed strictly on the backend.
 """
 
+import logging
 import os
 import threading
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 from .face_validation import (
     FaceValidationError,
@@ -212,6 +215,20 @@ class FaceRecognitionService:
             image_data,
             skip_quality_checks=skip_quality_checks,
         )
+        logger.info(
+            "[ENROLLMENT STAGE 4] Image validation successful: dimensions=%dx%d, channels=%d, payload_bytes=%d",
+            img_metadata.get("width", 0),
+            img_metadata.get("height", 0),
+            img_metadata.get("channels", 0),
+            img_metadata.get("payload_bytes", 0),
+        )
+
+        # Log Model Status (Stage 5)
+        logger.info(
+            "[ENROLLMENT STAGE 5] ArcFace model initialized: model_name=%s, root=%s",
+            getattr(self, "_model_name", "buffalo_l"),
+            getattr(self, "_model_root", "models/.insightface"),
+        )
 
         # 2. Run backend face detection & recognition pipeline
         faces = self._app.get(img)
@@ -222,16 +239,40 @@ class FaceRecognitionService:
         # 4. Validate face size
         validate_face_size(face.bbox, img.shape)
 
+        det_score = float(face.det_score) if hasattr(face, "det_score") else 1.0
+        bbox_coords = [round(float(c), 1) for c in face.bbox[:4]]
+        logger.info(
+            "[ENROLLMENT STAGE 6] Face detection successful: faces_detected=1, det_score=%.4f, bbox=%s",
+            det_score,
+            bbox_coords,
+        )
+
         # 5. Extract ArcFace embedding
         raw_embedding = getattr(face, "embedding", None)
         if raw_embedding is None:
             raise FaceRecognitionError("ArcFace recognition model failed to produce a feature embedding.")
+
+        raw_dim = int(raw_embedding.shape[0])
+        raw_norm = float(np.linalg.norm(raw_embedding))
+        logger.info(
+            "[ENROLLMENT STAGE 7] Embedding extraction successful: raw_dim=%d, raw_l2_norm=%.4f",
+            raw_dim,
+            raw_norm,
+        )
 
         # 6. Normalize embedding
         normed_embedding = self.normalize_embedding(raw_embedding)
 
         # 7. Validate embedding dimensions and numerical validity
         self.validate_embedding(normed_embedding)
+        unit_norm = float(np.linalg.norm(normed_embedding))
+        is_finite = bool(np.isfinite(normed_embedding).all())
+        logger.info(
+            "[ENROLLMENT STAGE 8] Embedding validation successful: normalized_dim=%d, unit_norm=%.4f, is_finite=%s",
+            int(normed_embedding.shape[0]),
+            unit_norm,
+            is_finite,
+        )
 
         return {
             "embedding": normed_embedding,

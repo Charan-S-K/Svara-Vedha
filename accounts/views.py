@@ -10,7 +10,10 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 import json
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 from .models import Profile, AttendanceRecord
 from mail import send_mail
@@ -399,21 +402,45 @@ def face_enroll_api(request):
     Enrolls a fresh 512-D ArcFace template for the authenticated Django user in MongoDB Atlas.
     Supports authenticated re-enrollment when explicitly requested.
     """
+    logger.info(
+        "[ENROLLMENT STAGE 1] Enrollment request received: method=%s, path=%s, remote_ip=%s",
+        request.method,
+        request.path,
+        request.META.get("REMOTE_ADDR", "unknown"),
+    )
+
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Method not allowed. Use POST."}, status=405)
 
     if not request.user.is_authenticated:
+        logger.warning("[ENROLLMENT STAGE 2 FAILED] Unauthenticated face enrollment attempt rejected.")
         return JsonResponse(
             {"success": False, "error": "Authentication required. You must be logged into an existing account to enroll your face."},
             status=401,
         )
+
+    logger.info(
+        "[ENROLLMENT STAGE 2] User authentication validated: user_id=%s, username=%s, email=%s",
+        request.user.id,
+        request.user.username,
+        request.user.email,
+    )
 
     data = _parse_request_data(request)
     face_image = data.get("face_image")
     re_enroll = str(data.get("re_enroll", "")).lower() in ("true", "1", "yes") or str(data.get("overwrite", "")).lower() in ("true", "1", "yes")
 
     if not face_image:
+        logger.warning("[ENROLLMENT STAGE 3 FAILED] No face image payload provided for enrollment.")
         return JsonResponse({"success": False, "error": "No face image provided for enrollment."}, status=400)
+
+    img_format = "base64_data_url" if isinstance(face_image, str) and face_image.startswith("data:") else "raw_string"
+    logger.info(
+        "[ENROLLMENT STAGE 3] Face image received: format=%s, payload_length=%d characters, re_enroll=%s",
+        img_format,
+        len(face_image),
+        re_enroll,
+    )
 
     try:
         extraction_result = extract_face_embedding(face_image)
@@ -432,32 +459,38 @@ def face_enroll_api(request):
         )
 
         if not persisted:
+            logger.error("[ENROLLMENT STAGE 10 FAILED] Storage backend returned false for persistence.")
             return JsonResponse(
                 {"success": False, "error": "Failed to persist face template in storage."},
                 status=500,
             )
 
+        logger.info("[ENROLLMENT COMPLETE] Biometric face template successfully enrolled for user_id=%s.", request.user.id)
         return JsonResponse({
             "success": True,
             "message": "Biometric face template enrolled successfully.",
             "redirect_url": "/dashboard/",
         })
 
-    except DuplicateEnrollmentError:
+    except DuplicateEnrollmentError as e:
+        logger.info("[ENROLLMENT DUPLICATE] Duplicate enrollment detected for user_id=%s.", request.user.id)
         return JsonResponse({
             "success": False,
             "error": "Face already enrolled for this account. To update your face template, please confirm re-enrollment.",
             "code": "already_enrolled",
         }, status=409)
-    except StorageNotConfiguredError:
+    except StorageNotConfiguredError as e:
+        logger.error("[ENROLLMENT STORAGE ERROR] Storage not configured: %s", str(e))
         return JsonResponse({
             "success": False,
             "error": "Biometric template storage is not configured. Face template cannot be saved until MongoDB is connected.",
             "code": "storage_not_configured",
         }, status=503)
     except FaceValidationError as e:
+        logger.warning("[ENROLLMENT VALIDATION ERROR] Face validation failed: %s (code=%s)", str(e), getattr(e, "code", "validation_error"))
         return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
     except Exception as e:
+        logger.exception("[ENROLLMENT UNEXPECTED ERROR] Face enrollment failed for user_id=%s: %s", request.user.id, str(e))
         return JsonResponse({"success": False, "error": f"Face enrollment failed: {str(e)}"}, status=500)
 
 

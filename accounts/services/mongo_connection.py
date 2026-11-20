@@ -99,17 +99,25 @@ def get_mongo_client(
         )
 
     try:
+        client_kwargs = {
+            "serverSelectionTimeoutMS": timeout_ms,
+            "connectTimeoutMS": timeout_ms,
+            "socketTimeoutMS": 10000,
+            "maxPoolSize": 50,
+            "minPoolSize": 5,
+            "retryWrites": True,
+            "appname": "SvaraabhavaFaceAuth",
+        }
+        try:
+            import certifi
+            ca_path = certifi.where()
+            if os.path.exists(ca_path):
+                client_kwargs["tlsCAFile"] = ca_path
+        except ImportError:
+            pass
+
         # Initialize client with connection pooling and timeouts
-        client = MongoClient(
-            uri,
-            serverSelectionTimeoutMS=timeout_ms,
-            connectTimeoutMS=timeout_ms,
-            socketTimeoutMS=10000,
-            maxPoolSize=50,
-            minPoolSize=5,
-            retryWrites=True,
-            appname="SvaraabhavaFaceAuth",
-        )
+        client = MongoClient(uri, **client_kwargs)
         # Test connection immediately
         client.admin.command("ping")
         _MONGO_CLIENT = client
@@ -117,12 +125,29 @@ def get_mongo_client(
         return _MONGO_CLIENT
 
     except (ServerSelectionTimeoutError, ConnectionFailure) as e:
-        logger.error("Failed to connect to MongoDB: %s", str(e))
+        err_msg = str(e)
+        logger.error("Failed to connect to MongoDB: %s", err_msg)
+        if "client" in locals():
+            try:
+                client.close()
+            except Exception:
+                pass
+        if "TLSV1_ALERT_INTERNAL_ERROR" in err_msg or "tlsv1 alert internal error" in err_msg:
+            raise MongoConnectionError(
+                "MongoDB Atlas TLS connection rejected (TLSV1_ALERT_INTERNAL_ERROR). "
+                "Your IP address is not whitelisted in MongoDB Atlas Network Access. "
+                "Please add your current IP address (or 0.0.0.0/0) to the IP Access List in the MongoDB Atlas dashboard."
+            ) from e
         raise MongoConnectionError(
             f"Failed to connect to MongoDB server within {timeout_ms}ms. Verify MONGODB_URI, network, and IP access list."
         ) from e
     except PyMongoError as e:
         logger.error("PyMongo error during client initialization: %s", str(e))
+        if "client" in locals():
+            try:
+                client.close()
+            except Exception:
+                pass
         raise MongoConnectionError(f"MongoDB connection error: {str(e)}") from e
 
 

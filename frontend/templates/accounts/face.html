@@ -311,7 +311,7 @@
                     <img 
                         id="faceFallbackImage" 
                         src="{% static 'images/face-scanner-frame.png' %}" 
-                        onerror="this.src='static/images/face-scanner-frame.png';"
+                        onerror="this.onerror=null; this.style.opacity='0.1';"
                         alt="Face Biometric Display" 
                         class="absolute inset-0 w-full h-full object-cover z-[1]"
                     />

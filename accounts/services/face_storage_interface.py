@@ -13,11 +13,14 @@ StorageNotConfiguredError or returns storage unconfigured status.
 
 from abc import ABC, abstractmethod
 import base64
+import logging
 import os
 from typing import Any, Dict, Optional, Union
 import numpy as np
 from django.conf import settings
 from django.utils.module_loading import import_string
+
+logger = logging.getLogger(__name__)
 
 
 class FaceStorageError(Exception):
@@ -273,6 +276,11 @@ class InMemoryFaceStorage(FaceStorageInterface):
             "embedding": np.copy(embedding).astype(np.float32),
             "metadata": metadata or {},
         }
+        logger.info(
+            "[ENROLLMENT STAGE 10] Storage write successful (InMemory): user_id=%s, dimensions=%d",
+            user_id,
+            int(embedding.shape[0]),
+        )
         return True
 
     def get_face_template(
@@ -303,6 +311,11 @@ class InMemoryFaceStorage(FaceStorageInterface):
             "embedding": np.copy(embedding).astype(np.float32),
             "metadata": metadata or {},
         }
+        logger.info(
+            "[ENROLLMENT STAGE 10] Storage write successful (InMemory): user_id=%s, dimensions=%d",
+            user_id,
+            int(embedding.shape[0]),
+        )
         return True
 
     def delete_face_template(

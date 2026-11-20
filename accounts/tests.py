@@ -53,6 +53,7 @@ from accounts.services import (
     compare_face_embeddings,
     InMemoryFaceStorage,
     NotConfiguredFaceStorage,
+    FaceStorageError,
     StorageNotConfiguredError,
     set_face_storage,
     get_face_storage,
@@ -1196,3 +1197,91 @@ class FaceRecognitionBackendTests(TestCase):
         reconstructed = np.frombuffer(decrypted_bytes, dtype=np.float32)
 
         self.assertTrue(np.allclose(self.genuine_embedding, reconstructed))
+
+    # -------------------------------------------------------------------------
+    # 37. ArcFace Model Failure during Enrollment
+    # -------------------------------------------------------------------------
+    def test_37_enrollment_arcface_model_failure(self):
+        """Verify face_enroll_api handles ArcFace pipeline failures cleanly."""
+        self.client.force_login(self.user)
+        with patch("accounts.views.extract_face_embedding", side_effect=FaceRecognitionError("ArcFace recognition model failed to produce a feature embedding.")):
+            resp = self.client.post(
+                reverse("face_enroll_api"),
+                data={"face_image": self.test_img_b64},
+            )
+            self.assertEqual(resp.status_code, 500)
+            data = resp.json()
+            self.assertFalse(data["success"])
+            self.assertIn("ArcFace recognition model failed", data["error"])
+
+    # -------------------------------------------------------------------------
+    # 38. MongoDB Connection Failure during Enrollment
+    # -------------------------------------------------------------------------
+    def test_38_enrollment_mongodb_connection_failure(self):
+        """Verify face_enroll_api handles MongoDB connection/SSL failures gracefully."""
+        self.client.force_login(self.user)
+        with patch("accounts.views.extract_face_embedding", return_value={"embedding": self.genuine_embedding, "det_score": 0.99}):
+            with patch.object(self.mock_storage, "save_face_template", side_effect=FaceStorageError("MongoDB connection failed: SSL handshake failed")):
+                resp = self.client.post(
+                    reverse("face_enroll_api"),
+                    data={"face_image": self.test_img_b64},
+                )
+                self.assertEqual(resp.status_code, 500)
+                data = resp.json()
+                self.assertFalse(data["success"])
+                self.assertIn("MongoDB connection failed", data["error"])
+
+    # -------------------------------------------------------------------------
+    # 39. Biometric Encryption Failure during Enrollment
+    # -------------------------------------------------------------------------
+    def test_39_enrollment_encryption_failure(self):
+        """Verify MongoFaceRepository raises FaceStorageError if encryption fails."""
+        mock_coll = MagicMock()
+        mock_coll.find_one.return_value = None
+        repo = MongoFaceRepository(collection=mock_coll)
+
+        with patch.object(repo, "_encrypt", side_effect=Exception("Cryptographic cipher failure")):
+            with self.assertRaises(Exception):
+                repo.save_face_template(
+                    user_id=self.user.id,
+                    embedding=self.genuine_embedding,
+                )
+
+    # -------------------------------------------------------------------------
+    # 40. Successful MongoDB Insert with Real Fernet Encryption
+    # -------------------------------------------------------------------------
+    def test_40_successful_mongodb_insert_with_real_fernet_encryption(self):
+        """Verify end-to-end MongoDB document creation with encrypted embedding and indexes."""
+        mock_coll = MagicMock()
+        mock_coll.name = "face_templates"
+        mock_coll.find_one.return_value = None
+        mock_coll.replace_one.return_value = MagicMock(upserted_id="mock_id_123")
+
+        repo = MongoFaceRepository(collection=mock_coll)
+        set_face_storage(repo)
+
+        self.client.force_login(self.user)
+        with patch("accounts.views.extract_face_embedding", return_value={"embedding": self.genuine_embedding, "det_score": 0.985}):
+            resp = self.client.post(
+                reverse("face_enroll_api"),
+                data={"face_image": self.test_img_b64},
+            )
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertTrue(data["success"])
+            self.assertEqual(data["redirect_url"], "/dashboard/")
+
+            # Verify replace_one was called on MongoDB collection with encrypted embedding
+            self.assertTrue(mock_coll.replace_one.called)
+            args, kwargs = mock_coll.replace_one.call_args
+            doc_filter = args[0]
+            doc_body = args[1]
+            self.assertEqual(doc_filter, {"user_id": str(self.user.id)})
+            self.assertIn("embedding", doc_body)
+            self.assertIsInstance(doc_body["embedding"], bytes)
+            # Ensure raw embedding is not plaintext
+            self.assertNotEqual(doc_body["embedding"], self.genuine_embedding.tobytes())
+            self.assertEqual(doc_body["model"]["name"], "ArcFace")
+            self.assertEqual(doc_body["model"]["dimensions"], 512)
+            self.assertTrue(doc_body["enrollment"]["is_active"])
+

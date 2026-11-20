@@ -135,7 +135,12 @@ class MongoFaceRepository(FaceStorageInterface):
         """Encrypt raw float32 embedding bytes using authenticated application-layer cipher."""
         cipher = get_biometric_cipher()
         raw_bytes = embedding.astype(np.float32).tobytes()
-        return cipher.encrypt(raw_bytes)
+        encrypted = cipher.encrypt(raw_bytes)
+        logger.info(
+            "[ENROLLMENT STAGE 9] Encryption successful: algorithm=Fernet(AES-128-CBC+HMAC-SHA256), encrypted_size=%d bytes",
+            len(encrypted),
+        )
+        return encrypted
 
     def _decrypt(self, encrypted_payload: Union[bytes, str, list]) -> np.ndarray:
         """Decrypt stored payload into a float32 NumPy embedding array."""
@@ -217,7 +222,14 @@ class MongoFaceRepository(FaceStorageInterface):
 
         try:
             coll.replace_one({"user_id": str_user_id}, doc, upsert=True)
-            logger.info("Face template successfully stored in MongoDB for user %s", str_user_id)
+            logger.info(
+                "[ENROLLMENT STAGE 10] MongoDB write successful: collection='%s', user_id=%s, model=%s, dimensions=%d, updated_at=%s",
+                coll.name,
+                str_user_id,
+                doc["model"]["name"],
+                dim,
+                now_utc.isoformat(),
+            )
             return True
         except DuplicateKeyError as e:
             raise DuplicateEnrollmentError(f"Duplicate enrollment detected for user {str_user_id}") from e
