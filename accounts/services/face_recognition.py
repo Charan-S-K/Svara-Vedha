@@ -17,6 +17,7 @@ All biometric feature extraction MUST be performed strictly on the backend.
 import logging
 import os
 import threading
+import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 from django.conf import settings
@@ -107,7 +108,12 @@ class FaceRecognitionService:
         providers = getattr(settings, "INSIGHTFACE_PROVIDERS", ["CPUExecutionProvider"])
         det_size = getattr(settings, "INSIGHTFACE_DET_SIZE", (640, 640))
 
-        app = FaceAnalysis(name=model_name, root=model_root, providers=providers)
+        app = FaceAnalysis(
+            name=model_name,
+            root=model_root,
+            allowed_modules=["detection", "recognition"],
+            providers=providers,
+        )
         # Prepare the model pipeline (detection + ArcFace recognition)
         app.prepare(ctx_id=-1, det_size=det_size)
 
@@ -211,10 +217,12 @@ class FaceRecognitionService:
             FaceRecognitionError: If extraction or embedding validation fails.
         """
         # 1. Image preprocessing and format validation
+        t_start = time.perf_counter()
         img, img_metadata = preprocess_and_validate_image(
             image_data,
             skip_quality_checks=skip_quality_checks,
         )
+        t_pre = time.perf_counter()
         logger.info(
             "[ENROLLMENT STAGE 4] Image validation successful: dimensions=%dx%d, channels=%d, payload_bytes=%d",
             img_metadata.get("width", 0),
@@ -238,6 +246,7 @@ class FaceRecognitionService:
 
         # 4. Validate face size
         validate_face_size(face.bbox, img.shape)
+        t_det = time.perf_counter()
 
         det_score = float(face.det_score) if hasattr(face, "det_score") else 1.0
         bbox_coords = [round(float(c), 1) for c in face.bbox[:4]]
@@ -265,6 +274,7 @@ class FaceRecognitionService:
 
         # 7. Validate embedding dimensions and numerical validity
         self.validate_embedding(normed_embedding)
+        t_emb = time.perf_counter()
         unit_norm = float(np.linalg.norm(normed_embedding))
         is_finite = bool(np.isfinite(normed_embedding).all())
         logger.info(
@@ -280,6 +290,11 @@ class FaceRecognitionService:
             "det_score": float(face.det_score) if hasattr(face, "det_score") else 1.0,
             "embedding_dim": int(normed_embedding.shape[0]),
             "validation_metadata": img_metadata,
+            "timing_metrics": {
+                "decode_and_validate_ms": round((t_pre - t_start) * 1000, 2),
+                "detection_ms": round((t_det - t_pre) * 1000, 2),
+                "embedding_ms": round((t_emb - t_det) * 1000, 2),
+            },
         }
 
 

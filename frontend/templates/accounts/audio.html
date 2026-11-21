@@ -1,0 +1,1535 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affirmation Player — Voice Stress AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       Voice Affirmation Player - Dark Cinematic Midnight Theme
+       ========================================================================== */
+    :root {
+      --bg-primary: #01030d;
+      --pill-bg: #18191f;
+      --pill-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f1f5f9;
+      --accent-red: #ea3943;
+      --accent-cyan: #38bdf8;
+      --track-bg: rgba(255, 255, 255, 0.18);
+      --thumb-color: #ffffff;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      font-family: var(--font-family);
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+    }
+
+    /* Top Unified Navigation Bar */
+    .app-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(1, 4, 14, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: #fff;
+    }
+
+    .brand-logo-badge svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-weight: 600;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2;
+    }
+
+    /* Cinematic Midnight Gradient Background */
+    .app-container {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 80px 24px 30px;
+      background: radial-gradient(ellipse 75% 55% at 50% 62%, #112658 0%, #081433 38%, #03081a 75%, #01040e 100%);
+      overflow: hidden;
+    }
+
+    /* Ambient Breathing Glow */
+    .ambient-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -40%);
+      width: 720px;
+      height: 520px;
+      background: radial-gradient(circle, rgba(23, 58, 140, 0.38) 0%, rgba(13, 30, 75, 0.16) 50%, transparent 75%);
+      filter: blur(65px);
+      pointer-events: none;
+      animation: ambientPulse 8s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+
+    @keyframes ambientPulse {
+      0% {
+        opacity: 0.7;
+        transform: translate(-50%, -40%) scale(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -40%) scale(1.1);
+      }
+    }
+
+    /* Background Particle Specks */
+    #particles-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Main Center Stage */
+    .stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 960px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* Affirmation Typography */
+    .affirmation-text-wrapper {
+      margin-bottom: 36px;
+      max-width: 860px;
+      padding: 0 16px;
+      opacity: 0;
+      transform: translateY(-14px);
+      animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.15s;
+    }
+
+    .affirmation-line {
+      font-size: clamp(1.12rem, 2.1vw, 1.38rem);
+      font-weight: 400;
+      line-height: 1.68;
+      color: #f1f5f9;
+      letter-spacing: -0.012em;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
+      margin-bottom: 6px;
+    }
+
+    .affirmation-line:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Karaoke Synchronized Word Glow */
+    .word-span {
+      display: inline-block;
+      transition: all 0.22s ease-out;
+      padding: 0 1px;
+    }
+
+    .word-span.active {
+      color: #ffffff;
+      transform: scale(1.05);
+      text-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 24px rgba(96, 165, 250, 0.8);
+    }
+
+    .word-span.passed {
+      color: #f8fafc;
+    }
+
+    /* Live Recording Status Pill */
+    .recording-status-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #cbd5e1;
+      background: rgba(16, 20, 30, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 18px;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+    }
+
+    .recording-status-box.recording {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: all 0.3s ease;
+    }
+
+    .recording-status-box.recording .status-dot {
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+      animation: pulseDot 1s infinite ease-in-out;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    .status-timer {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Audio Player Capsule Pill */
+    .player-container {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.35s;
+    }
+
+    .player-capsule {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 580px;
+      height: 52px;
+      background: var(--pill-bg);
+      border-radius: 9999px;
+      padding: 0 16px 0 14px;
+      box-shadow: 
+        0 16px 36px -8px rgba(0, 0, 0, 0.88),
+        0 4px 12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--pill-border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .player-capsule:hover {
+      box-shadow: 
+        0 20px 42px -6px rgba(0, 0, 0, 0.92),
+        0 6px 16px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.14),
+        0 0 25px rgba(23, 60, 140, 0.35);
+    }
+
+    /* Play/Pause Button */
+    .btn-control {
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      color: #ffffff;
+      padding: 0;
+      flex-shrink: 0;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+
+    .btn-control:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.08);
+    }
+
+    .btn-control:active {
+      transform: scale(0.92);
+    }
+
+    .btn-control svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .btn-play svg {
+      margin-left: 2px;
+    }
+
+    /* Scrubber Progress Track */
+    .scrubber-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      height: 34px;
+      margin: 0 16px 0 12px;
+      cursor: pointer;
+    }
+
+    .scrubber-track {
+      position: relative;
+      width: 100%;
+      height: 3.5px;
+      background-color: var(--track-bg);
+      border-radius: 4px;
+      transition: height 0.15s ease;
+    }
+
+    .scrubber-wrapper:hover .scrubber-track {
+      height: 4.5px;
+    }
+
+    /* Red Progress Line */
+    .scrubber-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: var(--accent-red);
+      border-radius: 4px;
+      pointer-events: none;
+      transition: width 0.05s linear;
+    }
+
+    /* Circular White Scrubber Knob */
+    .scrubber-thumb {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translate(-50%, -50%);
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background-color: var(--thumb-color);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .scrubber-wrapper:hover .scrubber-thumb,
+    .scrubber-wrapper.dragging .scrubber-thumb {
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 255, 255, 0.95);
+    }
+
+    /* Duration Time Display */
+    .time-display {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.015em;
+      color: #e2e8f0;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-right: 14px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+    }
+
+    /* Microphone Icon Button */
+    .btn-mic {
+      position: relative;
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #cbd5e1;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .btn-mic:hover {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.08);
+    }
+
+    .btn-mic svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+    }
+
+    /* Recording Pulse Ring */
+    .btn-mic.recording {
+      color: #ef4444;
+      animation: micPulse 1.2s infinite ease-in-out;
+    }
+
+    .btn-mic.recording::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border-radius: 50%;
+      border: 2px solid rgba(239, 68, 68, 0.65);
+      animation: rippleRing 1.5s infinite ease-out;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @keyframes rippleRing {
+      0% { transform: scale(0.9); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* Equalizer Frequency Bars */
+    .visualizer-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3.5px;
+      height: 22px;
+      margin-top: 18px;
+      opacity: 0.3;
+      transition: opacity 0.4s ease;
+    }
+
+    .visualizer-container.active {
+      opacity: 1;
+    }
+
+    .vis-bar {
+      width: 3px;
+      height: 4px;
+      background: linear-gradient(to top, rgba(234, 57, 67, 0.75), rgba(96, 165, 250, 0.95));
+      border-radius: 3px;
+      transition: height 0.08s ease;
+    }
+
+    /* Action Controls & Upload */
+    .actions-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 26px;
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .upload-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 9px 18px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-secondary svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2;
+    }
+
+    .uploaded-file-tag {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 6px 14px;
+      border-radius: 9999px;
+    }
+
+    .uploaded-file-tag.visible {
+      display: inline-flex;
+    }
+
+    /* Primary Analyze Voice Button */
+    .btn-analyze {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+      padding: 13px 26px;
+      border-radius: 9999px;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #2563eb 50%, #7c3aed);
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.5), 0 0 20px rgba(56, 189, 248, 0.3);
+      transition: all 0.25s ease;
+    }
+
+    .btn-analyze.visible {
+      display: inline-flex;
+      animation: pulseBtn 2s infinite ease-in-out;
+    }
+
+    .btn-analyze:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.7), 0 0 28px rgba(56, 189, 248, 0.5);
+    }
+
+    .btn-analyze:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-analyze:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+      animation: none !important;
+    }
+
+    @keyframes pulseBtn {
+      0%, 100% { box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.5), 0 0 16px rgba(56, 189, 248, 0.25); }
+      50% { box-shadow: 0 12px 30px -2px rgba(37, 99, 235, 0.75), 0 0 26px rgba(56, 189, 248, 0.45); }
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(1, 3, 13, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .loading-overlay.visible {
+      display: flex;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3.5px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .loading-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-family: var(--font-mono);
+      text-align: center;
+    }
+
+    /* Error Toast */
+    .error-toast {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      font-size: 0.85rem;
+      max-width: 500px;
+    }
+
+    .error-toast.visible {
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-navbar {
+        padding: 0 16px;
+      }
+      .brand-title-text {
+        display: none;
+      }
+      .player-capsule {
+        height: 48px;
+        padding: 0 12px 0 10px;
+      }
+      .scrubber-wrapper {
+        margin: 0 10px 0 8px;
+      }
+      .time-display {
+        font-size: 11.5px;
+        margin-right: 8px;
+      }
+      .affirmation-text-wrapper {
+        margin-bottom: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Unified Navigation Bar -->
+  <header class="app-navbar" role="banner">
+    <a href="{% url 'dashboard' %}" class="brand-logo" title="Back to Dashboard">
+      <span class="brand-logo-badge">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </span>
+      <span class="brand-title-text">VoiceStressAI</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main Navigation">
+      <a href="{% url 'dashboard' %}" class="nav-item" title="Return to Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a href="{% url 'voice_record' %}" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        </svg>
+        <span>Voice Recording</span>
+      </a>
+      <a href="{% url 'voice_results' %}" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 3v18h18"/>
+          <path d="m19 9-5 5-4-4-3 3"/>
+        </svg>
+        <span>Analysis Results</span>
+      </a>
+    </nav>
+  </header>
+
+  <div class="app-container">
+    <!-- Ambient Atmospheric Glow Layer -->
+    <div class="ambient-glow"></div>
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Main Center Stage -->
+    <main class="stage">
+      <!-- Affirmation Text (Django compatible with default fallback) -->
+      <section class="affirmation-text-wrapper" aria-label="Affirmation Quote">
+        <p class="affirmation-line" id="line-1">
+          {% if words_line_1 %}
+            {% for word in words_line_1 %}<span class="word-span">{{ word }}</span>{% if not forloop.last %} {% endif %}{% endfor %}
+          {% else %}
+            <span class="word-span">I</span> <span class="word-span">am</span> <span class="word-span">really</span> <span class="word-span">happy</span> <span class="word-span">today!</span> <span class="word-span">Everything</span> <span class="word-span">is</span> <span class="word-span">going</span> <span class="word-span">well,</span> <span class="word-span">and</span> <span class="word-span">I</span> <span class="word-span">am</span> <span class="word-span">excited</span> <span class="word-span">about</span> <span class="word-span">the</span> <span class="word-span">opportunities</span> <span class="word-span">ahead.</span>
+          {% endif %}
+        </p>
+        <p class="affirmation-line" id="line-2">
+          {% if words_line_2 %}
+            {% for word in words_line_2 %}<span class="word-span">{{ word }}</span>{% if not forloop.last %} {% endif %}{% endfor %}
+          {% else %}
+            <span class="word-span">I</span> <span class="word-span">feel</span> <span class="word-span">positive</span> <span class="word-span">and</span> <span class="word-span">confident</span> <span class="word-span">about</span> <span class="word-span">my</span> <span class="word-span">future!</span>
+          {% endif %}
+        </p>
+      </section>
+
+      <!-- Recording State Counter -->
+      <div class="recording-status-box" id="recording-status-box">
+        <span class="status-dot"></span>
+        <span id="recording-status-text">Click the microphone and read the text above aloud</span>
+        <span class="status-timer" id="live-timer" style="display: none;">0.0s / 10.0s</span>
+      </div>
+
+      <!-- Player Capsule Widget -->
+      <section class="player-container">
+        <div class="player-capsule" role="region" aria-label="Audio player">
+          <!-- Play / Pause Button -->
+          <button id="play-btn" class="btn-control btn-play" aria-label="Play / Pause" title="Play (Space)">
+            <svg id="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.14v14c0 .86.93 1.4 1.68.97l11-7c.75-.43.75-1.51 0-1.94l-11-7c-.75-.43-1.68.11-1.68.97z"/>
+            </svg>
+            <svg id="pause-icon" viewBox="0 0 24 24" style="display: none;" aria-hidden="true">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+          </button>
+
+          <!-- Scrubber / Progress Bar -->
+          <div class="scrubber-wrapper" id="scrubber-wrapper" role="slider" aria-label="Seek audio" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+            <div class="scrubber-track">
+              <div class="scrubber-progress" id="scrubber-progress"></div>
+              <div class="scrubber-thumb" id="scrubber-thumb"></div>
+            </div>
+          </div>
+
+          <!-- Time Display -->
+          <div class="time-display" id="time-display">0.0s / 10.0s</div>
+
+          <!-- Microphone Button -->
+          <button id="mic-btn" class="btn-mic" aria-label="Microphone record" title="Voice Input (M)">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Frequency Equalizer Bars -->
+        <div class="visualizer-container" id="visualizer-container" aria-hidden="true">
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+          <div class="vis-bar"></div>
+        </div>
+      </section>
+
+      <!-- Actions Panel -->
+      <div class="actions-panel">
+        <div class="upload-row">
+          <!-- Hidden Audio File Input -->
+          <input type="file" id="audio-file-input" accept="audio/*,.wav,.mp3,.ogg,.m4a,.webm,.flac" style="display: none;">
+          
+          <button type="button" class="btn-secondary" id="btn-upload-file" title="Upload WAV/MP3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Upload Audio File</span>
+          </button>
+
+          <button type="button" class="btn-secondary" id="btn-rerecord" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M1 4v6h6"/>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+            <span>Record Again</span>
+          </button>
+
+          <span class="uploaded-file-tag" id="uploaded-file-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <span id="file-name-label">recording.wav</span>
+          </span>
+        </div>
+
+        <!-- Primary Analyze Voice Button -->
+        <button type="button" class="btn-analyze" id="btn-analyze">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+          </svg>
+          <span>Analyze Voice</span>
+        </button>
+
+        <div class="error-toast" id="error-toast"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Loading State Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-title">Processing Voice Analysis</div>
+    <div class="loading-steps">
+      <div>1. Running Wav2Vec2 + BiLSTM Psychological Stress Model...</div>
+      <div>2. Running ECAPA-TDNN-VHE Vocal Health & Strain Model...</div>
+      <div>3. Running 7-Class Speech Emotion Recognition Model...</div>
+    </div>
+  </div>
+
+  <!-- Hidden HTML5 Audio Element for Playback -->
+  <audio id="audio-player" preload="auto" style="display: none;"></audio>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // CSRF Helper for Django POST
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // State
+      const state = {
+        isPlaying: false,
+        isRecording: false,
+        targetDuration: 10.0,
+        recordedDuration: 0.0,
+        currentTime: 0.0,
+        isDragging: false,
+        recordedBlob: null,
+        audioFile: null,
+        recordingStartTime: 0,
+        recordingTimerId: null,
+      };
+
+      // Elements
+      const playBtn = document.getElementById('play-btn');
+      const playIcon = document.getElementById('play-icon');
+      const pauseIcon = document.getElementById('pause-icon');
+      const scrubberWrapper = document.getElementById('scrubber-wrapper');
+      const scrubberProgress = document.getElementById('scrubber-progress');
+      const scrubberThumb = document.getElementById('scrubber-thumb');
+      const timeDisplay = document.getElementById('time-display');
+      const micBtn = document.getElementById('mic-btn');
+      const visualizerContainer = document.getElementById('visualizer-container');
+      const visBars = document.querySelectorAll('.vis-bar');
+      const wordSpans = document.querySelectorAll('.word-span');
+      const audioPlayer = document.getElementById('audio-player');
+      const recordingStatusBox = document.getElementById('recording-status-box');
+      const recordingStatusText = document.getElementById('recording-status-text');
+      const liveTimer = document.getElementById('live-timer');
+      const fileInput = document.getElementById('audio-file-input');
+      const uploadBtn = document.getElementById('btn-upload-file');
+      const rerecordBtn = document.getElementById('btn-rerecord');
+      const uploadedFileTag = document.getElementById('uploaded-file-tag');
+      const fileNameLabel = document.getElementById('file-name-label');
+      const analyzeBtn = document.getElementById('btn-analyze');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const errorToast = document.getElementById('error-toast');
+
+      let audioCtx = null;
+      let micStream = null;
+      let analyserNode = null;
+      let scriptProcessor = null;
+      let pcmBuffers = [];
+      let synthUtterance = null;
+      let toneOscillators = [];
+      let toneGain = null;
+
+      function init() {
+        updateScrubberUI(0, state.targetDuration);
+        initCanvasParticles();
+        bindEvents();
+      }
+
+      function showError(msg) {
+        if (!errorToast) return;
+        errorToast.textContent = msg;
+        errorToast.classList.add('visible');
+        setTimeout(() => { errorToast.classList.remove('visible'); }, 6000);
+      }
+
+      function clearError() {
+        if (errorToast) errorToast.classList.remove('visible');
+      }
+
+      // Update Scrubber & Time Counter
+      function updateScrubberUI(time, duration) {
+        const totalDuration = duration || state.recordedDuration || state.targetDuration;
+        state.currentTime = Math.max(0, Math.min(time, totalDuration));
+        const percent = totalDuration > 0 ? (state.currentTime / totalDuration) * 100 : 0;
+
+        if (scrubberProgress) scrubberProgress.style.width = `${percent}%`;
+        if (scrubberThumb) scrubberThumb.style.left = `${percent}%`;
+        if (timeDisplay) {
+          timeDisplay.textContent = `${state.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
+        }
+
+        updateWordHighlighting(state.currentTime, totalDuration);
+      }
+
+      // Word highlighting sync (highlights while user reads during recording, or during playback)
+      function updateWordHighlighting(time, duration) {
+        if (!wordSpans || wordSpans.length === 0) return;
+        const totalWords = wordSpans.length;
+        const currentWordIndex = Math.floor((time / duration) * totalWords);
+
+        wordSpans.forEach((span, idx) => {
+          if (idx === currentWordIndex && (state.isPlaying || state.isRecording)) {
+            span.classList.add('active');
+            span.classList.remove('passed');
+          } else if (idx < currentWordIndex && (state.isPlaying || state.isRecording)) {
+            span.classList.remove('active');
+            span.classList.add('passed');
+          } else {
+            span.classList.remove('active');
+            span.classList.remove('passed');
+          }
+        });
+      }
+
+      // Start Real 10-Second Web Audio Recording
+      async function startMicrophoneRecording() {
+        clearError();
+        if (state.isPlaying) pauseAudio();
+
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 1,
+              sampleRate: 16000,
+              echoCancellation: true,
+              noiseSuppression: false,
+            }
+          });
+        } catch (err) {
+          console.error("Microphone access error:", err);
+          showError("Microphone access denied or unavailable. Please enable microphone permissions in your browser.");
+          return;
+        }
+
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        const sourceNode = audioCtx.createMediaStreamSource(micStream);
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 64;
+        sourceNode.connect(analyserNode);
+
+        // Buffer PCM samples
+        pcmBuffers = [];
+        scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+        scriptProcessor.onaudioprocess = (e) => {
+          if (!state.isRecording) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          pcmBuffers.push(new Float32Array(inputData));
+        };
+        sourceNode.connect(scriptProcessor);
+        scriptProcessor.connect(audioCtx.destination);
+
+        // Update UI state
+        state.isRecording = true;
+        state.recordingStartTime = performance.now();
+        micBtn.classList.add('recording');
+        visualizerContainer.classList.add('active');
+        recordingStatusBox.classList.add('recording');
+        recordingStatusText.textContent = "Recording in progress... Please read the text above aloud";
+        liveTimer.style.display = "inline";
+        analyzeBtn.classList.remove('visible');
+
+        startVisualizerFrequencyLoop();
+
+        // Exact 10-Second Live Timer Loop
+        state.recordingTimerId = setInterval(() => {
+          if (!state.isRecording) return;
+          const elapsed = (performance.now() - state.recordingStartTime) / 1000;
+          if (elapsed >= state.targetDuration) {
+            liveTimer.textContent = "10.0s / 10.0s";
+            updateScrubberUI(10.0, 10.0);
+            stopMicrophoneRecording();
+          } else {
+            liveTimer.textContent = `${elapsed.toFixed(1)}s / ${state.targetDuration.toFixed(1)}s`;
+            updateScrubberUI(elapsed, state.targetDuration);
+          }
+        }, 80);
+      }
+
+      function stopMicrophoneRecording() {
+        if (!state.isRecording) return;
+        state.isRecording = false;
+
+        clearInterval(state.recordingTimerId);
+        state.recordingTimerId = null;
+
+        micBtn.classList.remove('recording');
+        visualizerContainer.classList.remove('active');
+        recordingStatusBox.classList.remove('recording');
+
+        // Stop microphone stream tracks
+        if (micStream) {
+          micStream.getTracks().forEach(t => t.stop());
+          micStream = null;
+        }
+
+        if (scriptProcessor) {
+          scriptProcessor.disconnect();
+          scriptProcessor = null;
+        }
+
+        // Encode recorded PCM chunks into 16-bit Mono WAV Blob
+        const sampleRate = audioCtx ? audioCtx.sampleRate : 16000;
+        const wavBlob = encodePCMToWav(pcmBuffers, sampleRate);
+        state.recordedBlob = wavBlob;
+        state.audioFile = new File([wavBlob], "voice_recording_10s.wav", { type: "audio/wav" });
+        state.recordedDuration = 10.0;
+
+        // Load into HTML5 audio player
+        const audioUrl = URL.createObjectURL(wavBlob);
+        audioPlayer.src = audioUrl;
+        audioPlayer.load();
+
+        recordingStatusText.textContent = "Voice reading captured! Click 'Analyze Voice Recording' below to process";
+        liveTimer.textContent = "10.0s / 10.0s";
+        rerecordBtn.style.display = "inline-flex";
+        fileNameLabel.textContent = "voice_recording_10s.wav (10s)";
+        uploadedFileTag.classList.add('visible');
+        analyzeBtn.classList.add('visible');
+        updateScrubberUI(0, 10.0);
+      }
+
+      // Convert Float32Array PCM buffers into compliant 16-bit mono WAV Blob
+      function encodePCMToWav(buffers, sampleRate) {
+        let totalSamples = 0;
+        for (let i = 0; i < buffers.length; i++) {
+          totalSamples += buffers[i].length;
+        }
+
+        const merged = new Float32Array(totalSamples);
+        let offset = 0;
+        for (let i = 0; i < buffers.length; i++) {
+          merged.set(buffers[i], offset);
+          offset += buffers[i].length;
+        }
+
+        // Clamp & trim to exactly 10s if slightly over
+        const maxSamples = Math.min(merged.length, Math.floor(sampleRate * 10.0));
+        const finalSamples = merged.subarray(0, maxSamples);
+
+        const buffer = new ArrayBuffer(44 + finalSamples.length * 2);
+        const view = new DataView(buffer);
+
+        // RIFF chunk descriptor
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + finalSamples.length * 2, true);
+        writeString(view, 8, 'WAVE');
+
+        // FMT sub-chunk
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+
+        // Data sub-chunk
+        writeString(view, 36, 'data');
+        view.setUint32(40, finalSamples.length * 2, true);
+
+        // Write 16-bit PCM samples
+        let byteOffset = 44;
+        for (let i = 0; i < finalSamples.length; i++) {
+          const s = Math.max(-1, Math.min(1, finalSamples[i]));
+          const int16 = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          view.setInt16(byteOffset, int16, true);
+          byteOffset += 2;
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+      }
+
+      function writeString(view, offset, str) {
+        for (let i = 0; i < str.length; i++) {
+          view.setUint8(offset + i, str.charCodeAt(i));
+        }
+      }
+
+      // Visualizer Frequency Animation with AnalyserNode
+      function startVisualizerFrequencyLoop() {
+        const dataArray = new Uint8Array(visBars.length);
+
+        function renderFrame() {
+          if (!state.isRecording && !state.isPlaying) return;
+
+          if (analyserNode && state.isRecording) {
+            analyserNode.getByteFrequencyData(dataArray);
+            visBars.forEach((bar, idx) => {
+              const val = dataArray[idx % dataArray.length] / 255.0;
+              bar.style.height = `${4 + val * 18}px`;
+            });
+          } else if (state.isPlaying) {
+            visBars.forEach((bar, idx) => {
+              const val = Math.sin(Date.now() * 0.01 + idx * 0.5) * 0.5 + 0.5;
+              bar.style.height = `${4 + val * 16}px`;
+            });
+          }
+
+          requestAnimationFrame(renderFrame);
+        }
+
+        requestAnimationFrame(renderFrame);
+      }
+
+      // Playback Controls
+      function togglePlay() {
+        if (!audioPlayer.src) {
+          if (state.isPlaying) pauseAudio();
+          else startAffirmationSynth();
+          return;
+        }
+
+        if (state.isPlaying) {
+          pauseAudio();
+        } else {
+          playAudio();
+        }
+      }
+
+      function playAudio() {
+        if (state.currentTime >= state.recordedDuration - 0.1) {
+          audioPlayer.currentTime = 0;
+        }
+        audioPlayer.play().then(() => {
+          state.isPlaying = true;
+          playIcon.style.display = 'none';
+          pauseIcon.style.display = 'block';
+          visualizerContainer.classList.add('active');
+          startVisualizerFrequencyLoop();
+        }).catch(err => {
+          console.error("Playback error:", err);
+        });
+      }
+
+      function pauseAudio() {
+        audioPlayer.pause();
+        state.isPlaying = false;
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+        visualizerContainer.classList.remove('active');
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      }
+
+      function startAffirmationSynth() {
+        state.isPlaying = true;
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+        visualizerContainer.classList.add('active');
+        startVisualizerFrequencyLoop();
+
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const text1 = document.getElementById('line-1')?.innerText || '';
+          const text2 = document.getElementById('line-2')?.innerText || '';
+          synthUtterance = new SpeechSynthesisUtterance(`${text1} ${text2}`);
+          synthUtterance.rate = 1.05;
+          synthUtterance.onend = () => { pauseAudio(); updateScrubberUI(0, 10.0); };
+          window.speechSynthesis.speak(synthUtterance);
+        }
+      }
+
+      // Audio Player Listeners
+      audioPlayer.addEventListener('timeupdate', () => {
+        if (!state.isDragging) {
+          updateScrubberUI(audioPlayer.currentTime, audioPlayer.duration || state.recordedDuration);
+        }
+      });
+
+      audioPlayer.addEventListener('ended', () => {
+        pauseAudio();
+        updateScrubberUI(0, state.recordedDuration);
+      });
+
+      audioPlayer.addEventListener('loadedmetadata', () => {
+        state.recordedDuration = audioPlayer.duration;
+        updateScrubberUI(0, state.recordedDuration);
+      });
+
+      // Scrubber Seek
+      function seekTo(clientX) {
+        const rect = scrubberWrapper.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const totalDuration = audioPlayer.duration || state.recordedDuration || state.targetDuration;
+        const targetTime = ratio * totalDuration;
+        if (audioPlayer.src) {
+          audioPlayer.currentTime = targetTime;
+        }
+        updateScrubberUI(targetTime, totalDuration);
+      }
+
+      function onMouseDownScrubber(e) {
+        state.isDragging = true;
+        scrubberWrapper.classList.add('dragging');
+        seekTo(e.clientX);
+
+        const onMove = (me) => { if (state.isDragging) seekTo(me.clientX); };
+        const onUp = () => {
+          state.isDragging = false;
+          scrubberWrapper.classList.remove('dragging');
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      }
+
+      function onTouchStartScrubber(e) {
+        state.isDragging = true;
+        seekTo(e.touches[0].clientX);
+
+        const onTouchMove = (te) => { if (state.isDragging) seekTo(te.touches[0].clientX); };
+        const onTouchEnd = () => {
+          state.isDragging = false;
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onTouchEnd);
+        };
+        window.addEventListener('touchmove', onTouchMove);
+        window.addEventListener('touchend', onTouchEnd);
+      }
+
+      // Audio File Upload Handling
+      function handleFileUpload(file) {
+        clearError();
+        if (!file) return;
+
+        const validExtensions = ['.wav', '.mp3', '.ogg', '.m4a', '.webm', '.flac'];
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (!file.type.startsWith('audio/') && !validExtensions.includes(ext)) {
+          showError("Unsupported file type. Please upload a WAV, MP3, OGG, or M4A audio file.");
+          return;
+        }
+
+        if (file.size > 25 * 1024 * 1024) {
+          showError("Audio file exceeds maximum size limit of 25MB.");
+          return;
+        }
+
+        state.audioFile = file;
+        state.recordedBlob = null;
+
+        const fileUrl = URL.createObjectURL(file);
+        audioPlayer.src = fileUrl;
+        audioPlayer.load();
+
+        fileNameLabel.textContent = file.name;
+        uploadedFileTag.classList.add('visible');
+        rerecordBtn.style.display = "inline-flex";
+        recordingStatusText.textContent = `Uploaded: ${file.name}`;
+        liveTimer.style.display = "none";
+        analyzeBtn.classList.add('visible');
+      }
+
+      // Backend Submission (Multipart Form-Data)
+      async function submitAudioForAnalysis() {
+        clearError();
+        if (!state.audioFile && !state.recordedBlob) {
+          showError("No voice recording or audio file available. Please record or upload audio first.");
+          return;
+        }
+
+        analyzeBtn.disabled = true;
+        loadingOverlay.classList.add('visible');
+
+        const formData = new FormData();
+        if (state.audioFile) {
+          formData.append('audio', state.audioFile, state.audioFile.name);
+        } else if (state.recordedBlob) {
+          formData.append('audio', state.recordedBlob, 'voice_recording_10s.wav');
+        }
+
+        try {
+          const response = await fetch("{% url 'voice_analyze_api' %}", {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            window.location.href = data.redirect_url || "{% url 'voice_results' %}";
+          } else {
+            loadingOverlay.classList.remove('visible');
+            analyzeBtn.disabled = false;
+            showError(data.error || "Voice analysis failed. Please try again.");
+          }
+        } catch (err) {
+          console.error("Submission error:", err);
+          loadingOverlay.classList.remove('visible');
+          analyzeBtn.disabled = false;
+          showError("Network or server error while connecting to the analysis backend.");
+        }
+      }
+
+      // Event Listeners
+      function bindEvents() {
+        playBtn.addEventListener('click', togglePlay);
+        scrubberWrapper.addEventListener('mousedown', onMouseDownScrubber);
+        scrubberWrapper.addEventListener('touchstart', onTouchStartScrubber, { passive: true });
+
+        // Mic Button
+        micBtn.addEventListener('click', () => {
+          if (state.isRecording) {
+            stopMicrophoneRecording();
+          } else {
+            startMicrophoneRecording();
+          }
+        });
+
+        // Re-record
+        rerecordBtn.addEventListener('click', () => {
+          pauseAudio();
+          audioPlayer.removeAttribute('src');
+          state.recordedBlob = null;
+          state.audioFile = null;
+          uploadedFileTag.classList.remove('visible');
+          analyzeBtn.classList.remove('visible');
+          rerecordBtn.style.display = "none";
+          recordingStatusText.textContent = "Click the microphone and read the text above aloud";
+          liveTimer.style.display = "none";
+          updateScrubberUI(0, 10.0);
+          startMicrophoneRecording();
+        });
+
+        // Upload File Button Trigger
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFileUpload(e.target.files[0]);
+          }
+        });
+
+        // Analyze Voice Button
+        analyzeBtn.addEventListener('click', submitAudioForAnalysis);
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            togglePlay();
+          } else if (e.code === 'KeyM' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            if (state.isRecording) stopMicrophoneRecording();
+            else startMicrophoneRecording();
+          }
+        });
+      }
+
+      // Subtle Ambient Background Star Specks
+      function initCanvasParticles() {
+        const canvas = document.getElementById('particles-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        let w = (canvas.width = window.innerWidth);
+        let h = (canvas.height = window.innerHeight);
+
+        window.addEventListener('resize', () => {
+          w = canvas.width = window.innerWidth;
+          h = canvas.height = window.innerHeight;
+        });
+
+        const particles = Array.from({ length: 32 }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          radius: Math.random() * 1.3 + 0.6,
+          alpha: Math.random() * 0.5 + 0.2,
+          dx: (Math.random() - 0.5) * 0.12,
+          dy: (Math.random() - 0.5) * 0.12,
+          speed: Math.random() * 0.02 + 0.01,
+        }));
+
+        function draw() {
+          ctx.clearRect(0, 0, w, h);
+          particles.forEach(p => {
+            p.x += p.dx;
+            p.y += p.dy;
+            p.alpha += Math.sin(Date.now() * p.speed) * 0.004;
+            p.alpha = Math.max(0.12, Math.min(0.65, p.alpha));
+
+            if (p.x < 0) p.x = w;
+            if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h;
+            if (p.y > h) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(220, 235, 255, ${p.alpha})`;
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+            ctx.fill();
+          });
+          requestAnimationFrame(draw);
+        }
+
+        draw();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

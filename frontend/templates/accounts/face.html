@@ -1041,28 +1041,11 @@
             const isUserAuth = document.body.getAttribute('data-user-authenticated') === 'true';
 
             if (actionType === 'signin') {
-                // SIGN IN TO DASHBOARD WORKFLOW
-                if (!accountIdentifier && !isUserAuth) {
-                    feedbackModal.classList.add('hidden');
-                    alertBanner.className = "mb-4 w-full max-w-[370px] p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5 animate-fade-in";
-                    alertIcon.className = "ph ph-warning-circle text-lg text-amber-500 flex-shrink-0";
-                    alertText.textContent = "Please enter your account email or username to sign in with face.";
-                    alertBanner.classList.remove('hidden');
-                    isProcessingAction = false;
-                    setActionButtonsDisabled(false);
-                    scanBeam.classList.remove('fast-scan');
-                    if (typedIdInput) typedIdInput.focus();
-                    return;
-                }
-
-                // Step: Extracting face...
-                feedbackTitle.textContent = "Extracting face...";
-                feedbackSubtitle.textContent = "Extracting ArcFace numerical feature embedding...";
-                await new Promise(r => setTimeout(r, 200));
-
-                // Step: Verifying identity...
+                // SIGN IN TO DASHBOARD WORKFLOW (Supports 1:1 with identifier or 1:N automatic face identification)
                 feedbackTitle.textContent = "Verifying identity...";
-                feedbackSubtitle.textContent = "Comparing face with enrolled biometric template...";
+                feedbackSubtitle.textContent = accountIdentifier 
+                    ? `Comparing face for ${accountIdentifier}...`
+                    : "Comparing face against registered templates...";
 
                 await submitFaceRequest({
                     action_type: 'signin',
@@ -1192,20 +1175,33 @@
             });
         }
 
-        // Extract Real Video Frame Snapshot from Webcam Feed
+        // Extract Optimized Video Frame Snapshot from Webcam Feed
         function captureBiometricPayload() {
             const videoEl = document.getElementById('faceWebcamFeed');
             if (!isWebcamActive || !videoEl || videoEl.videoWidth === 0) {
                 return null;
             }
 
-            // Capture raw high-resolution frame from live webcam feed
+            // High performance downscale: constrain to max 640px for fast network transfer & optimal ArcFace input
+            const maxDim = 640;
+            let targetW = videoEl.videoWidth || 640;
+            let targetH = videoEl.videoHeight || 480;
+            if (targetW > maxDim || targetH > maxDim) {
+                if (targetW >= targetH) {
+                    targetH = Math.round((targetH / targetW) * maxDim);
+                    targetW = maxDim;
+                } else {
+                    targetW = Math.round((targetW / targetH) * maxDim);
+                    targetH = maxDim;
+                }
+            }
+
             const canvas = document.createElement('canvas');
-            canvas.width = videoEl.videoWidth;
-            canvas.height = videoEl.videoHeight;
+            canvas.width = targetW;
+            canvas.height = targetH;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-            const imageBase64 = canvas.toDataURL('image/jpeg', 0.92);
+            ctx.drawImage(videoEl, 0, 0, targetW, targetH);
+            const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
             // Compute facial bounding box from verified MediaPipe landmarks to assist backend alignment
             let boundingBox = null;
@@ -1219,10 +1215,10 @@
                     if (pt.y > maxY) maxY = pt.y;
                 }
                 boundingBox = {
-                    x: Math.max(0, Math.round(minX * canvas.width)),
-                    y: Math.max(0, Math.round(minY * canvas.height)),
-                    width: Math.min(canvas.width, Math.round((maxX - minX) * canvas.width)),
-                    height: Math.min(canvas.height, Math.round((maxY - minY) * canvas.height))
+                    x: Math.max(0, Math.round(minX * targetW)),
+                    y: Math.max(0, Math.round(minY * targetH)),
+                    width: Math.min(targetW, Math.round((maxX - minX) * targetW)),
+                    height: Math.min(targetH, Math.round((maxY - minY) * targetH))
                 };
             }
 
@@ -1230,7 +1226,7 @@
                 face_image: imageBase64,
                 bounding_box: boundingBox,
                 landmarks_count: lastFaceLandmarks ? lastFaceLandmarks.length : 0,
-                recognition_model_client: null, // Explicit declaration: no client-side ArcFace/FaceNet model loaded
+                recognition_model_client: null,
                 timestamp: Date.now()
             };
         }
@@ -1346,7 +1342,7 @@
                     stopCamera();
                     setTimeout(() => {
                         window.location.href = data.redirect_url || "/dashboard/";
-                    }, 1000);
+                    }, 400);
                     return;
 
                 // ATTENDANCE SUCCESS
@@ -1369,7 +1365,7 @@
 
                     setTimeout(() => {
                         feedbackModal.classList.add('hidden');
-                    }, 3500);
+                    }, 3000);
                     return;
 
                 // ENROLLMENT SUCCESS
@@ -1379,7 +1375,7 @@
                     }
 
                     feedbackTitle.textContent = "Enrollment Confirmed";
-                    feedbackSubtitle.textContent = data.message || "Facial template registered in MongoDB. Redirecting...";
+                    feedbackSubtitle.textContent = data.message || "Facial template registered. Redirecting...";
                     feedbackIconWrap.className = "w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center flex-shrink-0 text-teal-400";
                     feedbackIcon.className = "ph-fill ph-user-focus text-xl";
                     feedbackModal.classList.remove('hidden');
@@ -1387,7 +1383,7 @@
                     stopCamera();
                     setTimeout(() => {
                         window.location.href = data.redirect_url || "/dashboard/";
-                    }, 1000);
+                    }, 400);
                 }
 
             } catch (err) {
@@ -1396,23 +1392,20 @@
                 isProcessingAction = false;
                 setActionButtonsDisabled(false);
 
-                let displayTitle = "Face verification failed.";
+                let displayTitle = "Authentication Failed";
                 let displayMsg = err.message || "Face verification failed.";
 
                 if (payload.action_type === 'signin') {
-                    displayTitle = "Face verification failed.";
-                    displayMsg = "Face verification failed.";
+                    displayTitle = "Sign In Failed";
+                    displayMsg = err.message || "Face verification failed. Please try again.";
                 } else if (payload.action_type === 'punch') {
                     const errLower = (err.message || "").toLowerCase();
                     if (errLower.includes("outside") || errLower.includes("geofence") || errLower.includes("away from college") || errLower.includes("permitted campus area")) {
-                        displayTitle = "Outside permitted campus area.";
-                        displayMsg = "Outside permitted campus area.";
-                    } else if (errLower.includes("mismatch") || errLower.includes("failed") || errLower.includes("did not match") || errLower.includes("verification failed")) {
-                        displayTitle = "Face verification failed.";
-                        displayMsg = "Face verification failed.";
+                        displayTitle = "Outside Permitted Campus Area";
+                        displayMsg = err.message || "You are currently outside the college geofence boundary.";
                     } else {
-                        displayTitle = "Face verification failed.";
-                        displayMsg = err.message || "Face verification failed.";
+                        displayTitle = "Attendance Verification Failed";
+                        displayMsg = err.message || "Face could not be verified for attendance.";
                     }
                 } else {
                     displayTitle = "Enrollment Failed";

@@ -1,0 +1,1504 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Analysis Dashboard — Stress, Strain & 7 Emotions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       Voice Stress, Strain & 7-Emotion Analysis Dashboard
+       ========================================================================== */
+    :root {
+      --bg-dark: #0a0d14;
+      --card-bg: #10141e;
+      --card-border: rgba(255, 255, 255, 0.06);
+      --header-bg: #141a27;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-dim: #64748b;
+      --cyan-accent: #38bdf8;
+      
+      /* Stress & Strain Palette */
+      --stress-color: #f59e0b;
+      --stress-bg: rgba(245, 158, 11, 0.08);
+      --stress-border: rgba(245, 158, 11, 0.22);
+      --strain-color: #f43f5e;
+      --strain-bg: rgba(244, 63, 94, 0.08);
+      --strain-border: rgba(244, 63, 94, 0.22);
+      
+      /* The 7 Emotion Palette */
+      --color-angry: #f43f5e;       /* 1. Angry: Anger or frustration */
+      --color-disgust: #f59e0b;     /* 2. Disgust: Dislike or aversion */
+      --color-fear: #eab308;        /* 3. Fear: Worry or fear */
+      --color-happy: #10b981;       /* 4. Happy: Happiness or joy */
+      --color-neutral: #94a3b8;     /* 5. Neutral: Normal or calm vocal expression */
+      --color-sad: #3b82f6;         /* 6. Sad: Sadness */
+      --color-surprise: #a855f7;    /* 7. Surprise: Unexpected or surprised expression */
+
+      --metric-arousal: #fbbf24;
+      --metric-dominance: #818cf8;
+      --metric-valence: #22d3ee;
+      
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 86px 16px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 189, 248, 0.07), transparent 70%),
+        radial-gradient(circle at 10% 40%, rgba(168, 85, 247, 0.035), transparent 40%),
+        radial-gradient(circle at 90% 60%, rgba(244, 63, 94, 0.035), transparent 40%);
+    }
+
+    /* Top Unified Navigation Bar */
+    .app-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(10, 13, 20, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: #fff;
+    }
+
+    .brand-logo-badge svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-weight: 600;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2;
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1240px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Common Card Styling */
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    .dash-card:hover {
+      border-color: rgba(56, 189, 248, 0.2);
+      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.05);
+    }
+
+    .dash-card:nth-child(1) { animation-delay: 0.05s; }
+    .dash-card:nth-child(2) { animation-delay: 0.12s; }
+    .dash-card:nth-child(3) { animation-delay: 0.20s; }
+    .dash-card:nth-child(4) { animation-delay: 0.28s; }
+
+    @keyframes cardFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Empty State Card */
+    .empty-state-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      gap: 20px;
+    }
+
+    .empty-state-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan-accent);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-icon svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .empty-state-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .empty-state-msg {
+      font-size: 1rem;
+      color: #94a3b8;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    .btn-record-now {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 13px 28px;
+      border-radius: 9999px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.5), 0 0 20px rgba(56, 189, 248, 0.25);
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+
+    .btn-record-now:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.7), 0 0 28px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Biomarkers Card */
+    .biomarkers-card {
+      border-color: rgba(255, 255, 255, 0.08);
+      background: #0e121b;
+    }
+
+    .top-meta-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .meta-title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .live-model-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-model-pill::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 6px #34d399;
+    }
+
+    .audio-recording-meta {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .rec-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    .rec-filename {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--cyan-accent);
+    }
+
+    .rec-spec {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .rec-spec svg {
+      width: 14px;
+      height: 14px;
+      color: var(--cyan-accent);
+    }
+
+    /* Stress & Strain 2-Column Grid */
+    .stress-strain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .metric-box {
+      border-radius: 12px;
+      padding: 18px 20px;
+      border: 1px solid;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .metric-box-stress {
+      background: var(--stress-bg);
+      border-color: var(--stress-border);
+    }
+
+    .metric-box-strain {
+      background: var(--strain-bg);
+      border-color: var(--strain-border);
+    }
+
+    .metric-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .metric-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .metric-value-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .metric-number {
+      font-family: var(--font-mono);
+      font-size: 2.3rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .metric-badge {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+
+    .metric-status {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .metric-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .metric-subtext {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin-top: 4px;
+    }
+
+    .metric-disclaimer {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* Overall Interpretation */
+    .interpretation-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .interp-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .interp-text {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    /* Header & Section Title */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .header-icon {
+      color: var(--cyan-accent);
+      display: flex;
+      align-items: center;
+    }
+
+    .header-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+    }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    /* 7 Emotion Category Filter Bar */
+    .emotion-categories-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .cat-chip {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .cat-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    .cat-chip.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--cyan-accent);
+      color: var(--cyan-accent);
+    }
+
+    .cat-chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* Waveform Stage */
+    .waveform-stage {
+      position: relative;
+      width: 100%;
+    }
+
+    .waveform-display-box {
+      position: relative;
+      width: 100%;
+      height: 175px;
+      background: #0b0e16;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      overflow: hidden;
+    }
+
+    .waveform-svg {
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      position: relative;
+    }
+
+    .segments-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .segment-box {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .segment-tag {
+      position: absolute;
+      top: -24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      transition: transform 0.2s ease;
+    }
+
+    .tag-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .tag-percent {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      opacity: 0.9;
+      margin-top: 1px;
+    }
+
+    .timeline-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      padding: 0 4px;
+    }
+
+    .timeline-footer {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* Middle Row Grid */
+    .middle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    /* Donut Chart */
+    .chart-container-donut {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 20px;
+      padding: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .donut-svg-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      flex-shrink: 0;
+    }
+
+    .donut-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .donut-segment {
+      fill: none;
+      stroke-width: 18;
+      stroke-linecap: butt;
+      cursor: pointer;
+      transition: stroke-width 0.2s ease, opacity 0.2s ease;
+    }
+
+    .donut-segment:hover {
+      stroke-width: 22;
+      opacity: 1 !important;
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .legend-item:hover {
+      color: #ffffff;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Confidence Stream */
+    .stream-header-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stream-chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 160px;
+      background: #0b0e16;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 10px 14px;
+      display: flex;
+    }
+
+    .stream-y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      padding-right: 10px;
+      width: 28px;
+    }
+
+    .stream-svg-area {
+      position: relative;
+      flex: 1;
+      height: 100%;
+    }
+
+    .stream-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .stream-x-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      padding-left: 28px;
+    }
+
+    .x-axis-title {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* Detection Log Table */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+
+    .log-table th {
+      padding: 10px 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .log-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #cbd5e1;
+      transition: background-color 0.15s ease;
+    }
+
+    .log-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .emotion-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    .emotion-indicator-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .confidence-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+
+    /* Floating Tooltip */
+    .floating-tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(16, 20, 30, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.78rem;
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      display: none;
+      transform: translate(-50%, -100%);
+      white-space: nowrap;
+      transition: opacity 0.15s ease;
+    }
+
+    @media (max-width: 900px) {
+      .stress-strain-grid,
+      .middle-grid {
+        grid-template-columns: 1fr;
+      }
+      .app-navbar {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Unified Navigation Bar -->
+  <header class="app-navbar" role="banner">
+    <a href="{% url 'dashboard' %}" class="brand-logo" title="Back to Dashboard">
+      <span class="brand-logo-badge">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </span>
+      <span>VoiceStressAI</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main Navigation">
+      <a href="{% url 'dashboard' %}" class="nav-item" title="Return to Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a href="{% url 'voice_record' %}" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        </svg>
+        <span>Voice Recording</span>
+      </a>
+      <a href="{% url 'voice_results' %}" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 3v18h18"/>
+          <path d="m19 9-5 5-4-4-3 3"/>
+        </svg>
+        <span>Analysis Results</span>
+      </a>
+    </nav>
+  </header>
+
+  <div class="dashboard-container">
+
+    {% if not has_recording %}
+    <!-- ======================================================================
+         EMPTY STATE: No Voice Recording Submitted
+         ====================================================================== -->
+    <section class="dash-card empty-state-card">
+      <div class="empty-state-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </div>
+      <h2 class="empty-state-title">No Voice Recording Available</h2>
+      <p class="empty-state-msg">
+        Please record or upload audio first. Once analyzed, your Voice Stress, Voice Strain, and 7-Emotion distribution will appear here.
+      </p>
+      <a href="{% url 'voice_record' %}" class="btn-record-now">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Go to Voice Recording</span>
+      </a>
+    </section>
+
+    {% else %}
+    <!-- ======================================================================
+         Card 0: VOICE ANALYSIS DASHBOARD — STRESS & STRAIN
+         ====================================================================== -->
+    <section class="dash-card biomarkers-card">
+      <div class="top-meta-header">
+        <div class="meta-title-group">
+          <h1>Voice Analysis Dashboard</h1>
+        </div>
+        <span class="live-model-pill">3 Neural Models Active</span>
+      </div>
+
+      <!-- Audio Recording Metadata -->
+      <div class="audio-recording-meta">
+        <div class="rec-label">AUDIO RECORDING</div>
+        <div class="rec-filename">{{ analysis.audio_info.filename|default:"voice_recording.wav" }}</div>
+        <div class="rec-spec">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="3" y2="12"></line>
+            <line x1="7" y1="8" x2="7" y2="16"></line>
+            <line x1="11" y1="4" x2="11" y2="20"></line>
+            <line x1="15" y1="7" x2="15" y2="17"></line>
+            <line x1="19" y1="10" x2="19" y2="14"></line>
+          </svg>
+          <span>16 kHz · Mono · {{ analysis.audio_info.duration_formatted|default:"10.0 seconds" }}</span>
+        </div>
+      </div>
+
+      <!-- Stress & Strain 2-Column Cards -->
+      <div class="stress-strain-grid">
+        <!-- Stress Card (Model 1: Wav2Vec2 + BiLSTM) -->
+        <div class="metric-box metric-box-stress" id="card-stress">
+          <div class="metric-box-header">
+            <span class="metric-icon" style="color: var(--stress-color);">
+              <svg viewBox="0 0 24 24">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+              </svg>
+            </span>
+            <span class="metric-title" style="color: var(--stress-color);">PSYCHOLOGICAL STRESS</span>
+          </div>
+
+          {% if analysis.stress.available %}
+          <div class="metric-value-row">
+            <span class="metric-number" style="color: var(--stress-color);">{{ analysis.stress.percentage }}%</span>
+            <span class="metric-badge">Wav2Vec2 + BiLSTM</span>
+          </div>
+          <div class="metric-status">{{ analysis.stress.category }}</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" style="width: {{ analysis.stress.percentage }}%; background: var(--stress-color);"></div>
+          </div>
+          <p class="metric-subtext">{{ analysis.stress.interpretation }}</p>
+          {% else %}
+          <div class="metric-status" style="color: #94a3b8;">Stress Analysis Unavailable</div>
+          <p class="metric-subtext">{{ analysis.stress.status }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Voice Strain Card (Model 2: ECAPA-TDNN-VHE) -->
+        <div class="metric-box metric-box-strain" id="card-strain">
+          <div class="metric-box-header">
+            <span class="metric-icon" style="color: var(--strain-color);">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+                <path d="M7 12h2.5l2-4 3 8 2-4h2.5"></path>
+              </svg>
+            </span>
+            <span class="metric-title" style="color: var(--strain-color);">VOICE STRAIN & FATIGUE</span>
+          </div>
+
+          {% if analysis.strain.available %}
+          <div class="metric-value-row">
+            <span class="metric-number" style="color: var(--strain-color);">{{ analysis.strain.percentage }}%</span>
+            <span class="metric-badge">ECAPA-TDNN-VHE 192-D</span>
+          </div>
+          <div class="metric-status">{{ analysis.strain.category }}</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" style="width: {{ analysis.strain.percentage }}%; background: var(--strain-color);"></div>
+          </div>
+          <p class="metric-subtext">{{ analysis.strain.interpretation }}</p>
+          <div class="metric-disclaimer">Notice: {{ analysis.strain.disclaimer }}</div>
+          {% else %}
+          <div class="metric-status" style="color: #94a3b8;">Strain Analysis Unavailable</div>
+          <p class="metric-subtext">{{ analysis.strain.status }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Overall Interpretation -->
+      <div class="interpretation-section">
+        <div class="interp-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-accent)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Overall Acoustic Interpretation
+        </div>
+        <p class="interp-text" id="interp-text">
+          {{ analysis.overall_interpretation|default:"Acoustic biomarker analysis complete across psychological stress, vocal health strain, and speech prosody models." }}
+        </p>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Card 1: EMOTION WAVEFORM ANALYSIS (7 Emotions)
+         ====================================================================== -->
+    <section class="dash-card">
+      <div class="card-header">
+        <span class="header-icon">
+          <svg viewBox="0 0 24 24">
+            <line x1="4" y1="12" x2="4" y2="12"></line>
+            <line x1="8" y1="8" x2="8" y2="16"></line>
+            <line x1="12" y1="4" x2="12" y2="20"></line>
+            <line x1="16" y1="7" x2="16" y2="17"></line>
+            <line x1="20" y1="10" x2="20" y2="14"></line>
+          </svg>
+        </span>
+        <h2 class="card-title">EMOTION WAVEFORM ANALYSIS</h2>
+      </div>
+      <p class="card-subtitle">Temporal audio waveform colored by detected emotion across 7 neural classes</p>
+
+      <!-- 7 Emotion Quick Filter / Meaning Chips -->
+      <div class="emotion-categories-bar" aria-label="Emotion category filter">
+        <span class="cat-chip chip-all active" data-filter="all">All (7)</span>
+        <span class="cat-chip chip-angry" data-filter="angry"><span class="cat-chip-dot" style="background: var(--color-angry);"></span> 1. Angry</span>
+        <span class="cat-chip chip-disgust" data-filter="disgust"><span class="cat-chip-dot" style="background: var(--color-disgust);"></span> 2. Disgust</span>
+        <span class="cat-chip chip-fear" data-filter="fear"><span class="cat-chip-dot" style="background: var(--color-fear);"></span> 3. Fear</span>
+        <span class="cat-chip chip-happy" data-filter="happy"><span class="cat-chip-dot" style="background: var(--color-happy);"></span> 4. Happy</span>
+        <span class="cat-chip chip-neutral" data-filter="neutral"><span class="cat-chip-dot" style="background: var(--color-neutral);"></span> 5. Neutral</span>
+        <span class="cat-chip chip-sad" data-filter="sad"><span class="cat-chip-dot" style="background: var(--color-sad);"></span> 6. Sad</span>
+        <span class="cat-chip chip-surprise" data-filter="surprise"><span class="cat-chip-dot" style="background: var(--color-surprise);"></span> 7. Surprise</span>
+      </div>
+
+      <div class="waveform-stage">
+        <div class="waveform-display-box" id="waveform-box">
+          <svg class="waveform-svg" viewBox="0 0 1000 140" preserveAspectRatio="none">
+            <line x1="0" y1="70" x2="1000" y2="70" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            
+            <!-- Segment 1 -->
+            <g class="wf-group" data-segment="1">
+              <path d="M 10 70 L 30 62 L 50 78 L 70 58 L 90 82 L 110 60 L 130 80 L 140 70" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 10 70 L 30 62 L 50 78 L 70 58 L 90 82 L 110 60 L 130 80 L 140 70 Z" fill="rgba(148, 163, 184, 0.12)"/>
+            </g>
+            <!-- Segment 2 -->
+            <g class="wf-group" data-segment="2">
+              <path d="M 140 70 L 165 48 L 190 92 L 215 38 L 240 102 L 265 46 L 280 70" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 140 70 L 165 48 L 190 92 L 215 38 L 240 102 L 265 46 L 280 70 Z" fill="rgba(16, 185, 129, 0.14)"/>
+            </g>
+            <!-- Segment 3 -->
+            <g class="wf-group" data-segment="3">
+              <path d="M 280 70 L 305 40 L 330 100 L 355 30 L 380 110 L 405 50 L 420 70" fill="none" stroke="#a855f7" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 280 70 L 305 40 L 330 100 L 355 30 L 380 110 L 405 50 L 420 70 Z" fill="rgba(168, 85, 247, 0.14)"/>
+            </g>
+            <!-- Segment 4 -->
+            <g class="wf-group" data-segment="4">
+              <path d="M 420 70 L 445 54 L 470 86 L 495 44 L 520 96 L 545 52 L 560 70" fill="none" stroke="#eab308" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 420 70 L 445 54 L 470 86 L 495 44 L 520 96 L 545 52 L 560 70 Z" fill="rgba(234, 179, 8, 0.14)"/>
+            </g>
+            <!-- Segment 5 -->
+            <g class="wf-group" data-segment="5">
+              <path d="M 560 70 L 585 58 L 610 82 L 635 48 L 660 92 L 685 56 L 700 70" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 560 70 L 585 58 L 610 82 L 635 48 L 660 92 L 685 56 L 700 70 Z" fill="rgba(245, 158, 11, 0.14)"/>
+            </g>
+            <!-- Segment 6 -->
+            <g class="wf-group" data-segment="6">
+              <path d="M 700 70 L 730 60 L 760 80 L 790 56 L 820 84 L 840 70" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 700 70 L 730 60 L 760 80 L 790 56 L 820 84 L 840 70 Z" fill="rgba(59, 130, 246, 0.14)"/>
+            </g>
+            <!-- Segment 7 -->
+            <g class="wf-group" data-segment="7">
+              <path d="M 840 70 L 870 38 L 900 102 L 930 28 L 960 112 L 990 70" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 840 70 L 870 38 L 900 102 L 930 28 L 960 112 L 990 70 Z" fill="rgba(244, 63, 94, 0.14)"/>
+            </g>
+          </svg>
+
+          <!-- 7 Segment Bounding Boxes -->
+          <div class="segments-overlay" id="segments-overlay">
+            {% for seg in analysis.emotion.segments %}
+            <div class="segment-box" data-segment="{{ seg.segment_number }}" data-emotion="{{ seg.emotion }}" data-meaning="{{ seg.meaning }}"
+                 style="left: calc({{ forloop.counter0 }} * 14.28% + 0.5%); width: 13.5%; border-color: {{ seg.color }}66; background: {{ seg.color }}14;">
+              <div class="segment-tag">
+                <span class="tag-title" style="color: {{ seg.color }};">{{ seg.emotion|title }}</span>
+                <span class="tag-percent" style="color: {{ seg.color }};">{{ seg.confidence }}%</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="timeline-axis">
+          <span>0.0s</span>
+          <span>1.4s</span>
+          <span>2.9s</span>
+          <span>4.3s</span>
+          <span>5.7s</span>
+          <span>7.1s</span>
+          <span>8.6s</span>
+          <span>10.0s</span>
+        </div>
+        <div class="timeline-footer">Audio Timeline (proportional across 7 detected neural micro-segments)</div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Card 2: Donut Chart & Confidence Stream
+         ====================================================================== -->
+    <div class="middle-grid">
+      <!-- Donut Chart -->
+      <section class="dash-card">
+        <div class="card-header">
+          <span class="header-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+          </span>
+          <h2 class="card-title">EMOTION PROBABILITY DISTRIBUTION</h2>
+        </div>
+
+        <div class="chart-container-donut">
+          <div class="donut-svg-wrapper">
+            <svg class="donut-svg" id="donut-svg" viewBox="0 0 160 160">
+              <!-- Dynamically populated via JS -->
+            </svg>
+
+            <svg style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;" viewBox="0 0 160 160">
+              <text x="80" y="74" fill="#94a3b8" font-size="8" font-weight="600" text-anchor="middle" letter-spacing="0.05em">DOMINANT</text>
+              <text x="80" y="92" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">
+                {{ analysis.emotion.dominant_emotion|upper }}
+              </text>
+            </svg>
+          </div>
+
+          <div class="donut-legend" id="donut-legend">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Confidence Stream -->
+      <section class="dash-card">
+        <div class="stream-header-wrapper">
+          <div class="card-header" style="margin-bottom: 0;">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M2 12c2.5-6 5.5-6 8 0s5.5 6 8 0 3.5-3 4-3"></path>
+              </svg>
+            </span>
+            <h2 class="card-title">EMOTION CONFIDENCE STREAM</h2>
+          </div>
+        </div>
+
+        <div class="stream-chart-wrapper" id="stream-chart-box">
+          <div class="stream-y-axis">
+            <span>100%</span>
+            <span>75%</span>
+            <span>50%</span>
+            <span>25%</span>
+            <span>0%</span>
+          </div>
+
+          <div class="stream-svg-area">
+            <svg class="stream-svg" id="stream-svg" viewBox="0 0 700 150" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-angry" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f43f5e" stop-opacity="0.85"/><stop offset="100%" stop-color="#f43f5e" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-disgust" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.85"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-fear" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eab308" stop-opacity="0.85"/><stop offset="100%" stop-color="#eab308" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-happy" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/><stop offset="100%" stop-color="#10b981" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-neutral" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#94a3b8" stop-opacity="0.85"/><stop offset="100%" stop-color="#94a3b8" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-sad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.85"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0.08"/></linearGradient>
+                <linearGradient id="grad-surprise" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.85"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0.08"/></linearGradient>
+              </defs>
+
+              <line x1="0" y1="0" x2="700" y2="0" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="0" y1="37" x2="700" y2="37" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="0" y1="75" x2="700" y2="75" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="0" y1="112" x2="700" y2="112" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="0" y1="150" x2="700" y2="150" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+
+              <!-- Generated dynamically via JS -->
+              <g id="stream-curves-group"></g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="stream-x-axis">
+          <span>0s</span>
+          <span>2s</span>
+          <span>4s</span>
+          <span>6s</span>
+          <span>8s</span>
+          <span>10s</span>
+        </div>
+        <div class="x-axis-title">Time (s) across 7 emotional transitions</div>
+      </section>
+    </div>
+
+    <!-- ======================================================================
+         Card 3: MICRO-SEGMENT DETECTION LOG (7 Micro-Segments)
+         ====================================================================== -->
+    <section class="dash-card">
+      <div class="card-header">
+        <span class="header-icon">
+          <svg viewBox="0 0 24 24">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </span>
+        <h2 class="card-title">MICRO-SEGMENT DETECTION LOG — BIOMARKERS & 7 EMOTIONS</h2>
+      </div>
+
+      <div class="table-container">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>NO.</th>
+              <th>TIME RANGE</th>
+              <th>INFERRED EMOTION</th>
+              <th>MEANING / DESCRIPTION</th>
+              <th>CONFIDENCE</th>
+              <th>STRESS</th>
+              <th>STRAIN</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for seg in analysis.emotion.segments %}
+            <tr data-segment="{{ seg.segment_number }}" data-emotion="{{ seg.emotion }}">
+              <td>{{ seg.segment_number }}</td>
+              <td style="font-family: var(--font-mono);">{{ seg.time_range }}</td>
+              <td>
+                <div class="emotion-cell" style="color: {{ seg.color }};">
+                  <span class="emotion-indicator-dot" style="background: {{ seg.color }}; box-shadow: 0 0 8px {{ seg.color }};"></span>
+                  {{ seg.emoji }} {{ seg.emotion|upper }}
+                </div>
+              </td>
+              <td>{{ seg.meaning }}</td>
+              <td><span class="confidence-badge" style="color: {{ seg.color }};">{{ seg.confidence }}%</span></td>
+              <td style="font-family: var(--font-mono); color: var(--stress-color);">{{ analysis.stress.percentage|default:"--" }}%</td>
+              <td style="font-family: var(--font-mono); color: var(--strain-color);">{{ analysis.strain.percentage|default:"--" }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+
+  <!-- Interactive Floating Tooltip -->
+  <div class="floating-tooltip" id="tooltip"></div>
+
+  <!-- Dynamic Dashboard Script -->
+  <script>
+    (function () {
+      'use strict';
+
+      // Load session analysis payload from Django context
+      const rawAnalysis = {{ analysis_json|safe }};
+      if (!rawAnalysis || !rawAnalysis.success) return;
+
+      const emotionColors = {
+        angry: '#f43f5e',
+        disgust: '#f59e0b',
+        fear: '#eab308',
+        happy: '#10b981',
+        neutral: '#94a3b8',
+        sad: '#3b82f6',
+        surprise: '#a855f7',
+      };
+
+      const emotionMeanings = {
+        angry: 'Anger or frustration',
+        disgust: 'Dislike or aversion',
+        fear: 'Worry or fear',
+        happy: 'Happiness or joy',
+        neutral: 'Normal or calm vocal expression',
+        sad: 'Sadness',
+        surprise: 'Unexpected or surprised expression',
+      };
+
+      const tooltip = document.getElementById('tooltip');
+      const catChips = document.querySelectorAll('.cat-chip');
+
+      // 1. Render Dynamic Donut Chart & Legend
+      const donutSvg = document.getElementById('donut-svg');
+      const donutLegend = document.getElementById('donut-legend');
+
+      if (donutSvg && donutLegend && rawAnalysis.emotion && rawAnalysis.emotion.probabilities) {
+        const probs = rawAnalysis.emotion.probabilities;
+        const radius = 54;
+        const circumference = 2 * Math.PI * radius;
+        let currentOffset = 0;
+
+        donutSvg.innerHTML = '';
+        donutLegend.innerHTML = '';
+
+        for (const [emotion, pct] of Object.entries(probs)) {
+          const color = emotionColors[emotion] || '#94a3b8';
+          const strokeLength = (pct / 100.0) * circumference;
+          const strokeGap = circumference - strokeLength;
+
+          // Donut circle slice
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('class', 'donut-segment');
+          circle.setAttribute('cx', '80');
+          circle.setAttribute('cy', '80');
+          circle.setAttribute('r', radius.toString());
+          circle.setAttribute('stroke', color);
+          circle.setAttribute('stroke-dasharray', `${strokeLength.toFixed(2)} ${strokeGap.toFixed(2)}`);
+          circle.setAttribute('stroke-dashoffset', (-currentOffset).toFixed(2));
+          circle.setAttribute('data-name', emotion);
+          circle.setAttribute('data-pct', `${pct}%`);
+          circle.setAttribute('data-meaning', emotionMeanings[emotion] || '');
+
+          circle.addEventListener('mouseenter', (e) => {
+            highlightEmotion(emotion);
+            showTooltip(e, `<strong>${emotion.toUpperCase()} (${pct}%)</strong><br>${emotionMeanings[emotion]}`);
+          });
+          circle.addEventListener('mousemove', updateTooltipPos);
+          circle.addEventListener('mouseleave', () => { resetHighlights(); hideTooltip(); });
+
+          donutSvg.appendChild(circle);
+          currentOffset += strokeLength;
+
+          // Legend item
+          const item = document.createElement('div');
+          item.setAttribute('class', 'legend-item');
+          item.setAttribute('data-emotion', emotion);
+          item.innerHTML = `<span class="legend-swatch" style="background: ${color};"></span> ${emotion.charAt(0).toUpperCase() + emotion.slice(1)} (${pct}%)`;
+
+          item.addEventListener('mouseenter', () => highlightEmotion(emotion));
+          item.addEventListener('mouseleave', resetHighlights);
+          donutLegend.appendChild(item);
+        }
+      }
+
+      // 2. Render Dynamic Confidence Stream
+      const streamCurvesGroup = document.getElementById('stream-curves-group');
+      if (streamCurvesGroup && rawAnalysis.emotion && rawAnalysis.emotion.segments) {
+        const segs = rawAnalysis.emotion.segments;
+        streamCurvesGroup.innerHTML = '';
+
+        segs.forEach((seg, idx) => {
+          const color = seg.color || emotionColors[seg.emotion] || '#94a3b8';
+          const pct = seg.confidence || 50;
+          const yPeak = 150 - (pct / 100.0) * 135;
+
+          const xStart = idx * 100;
+          const xPeak = xStart + 50;
+          const xEnd = xStart + 100;
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('class', 'stream-curve');
+          path.setAttribute('data-emotion', seg.emotion);
+          path.setAttribute('data-val', `${pct}%`);
+          path.setAttribute('d', `M ${xStart} 150 C ${xStart + 20} 150 ${xPeak - 20} ${yPeak} ${xPeak} ${yPeak} C ${xPeak + 20} ${yPeak} ${xEnd - 20} 150 ${xEnd} 150 Z`);
+          path.setAttribute('fill', `url(#grad-${seg.emotion})`);
+          path.setAttribute('stroke', color);
+          path.setAttribute('stroke-width', '1.6');
+
+          path.addEventListener('mouseenter', (e) => {
+            highlightEmotion(seg.emotion);
+            showTooltip(e, `<strong>${seg.emotion.toUpperCase()}: ${pct}%</strong><br>Segment ${seg.segment_number} (${seg.time_range})`);
+          });
+          path.addEventListener('mousemove', updateTooltipPos);
+          path.addEventListener('mouseleave', () => { resetHighlights(); hideTooltip(); });
+
+          streamCurvesGroup.appendChild(path);
+        });
+      }
+
+      // 3. Cross-Highlighting Functions
+      function highlightEmotion(emotion) {
+        document.querySelectorAll('.segment-box').forEach(box => {
+          if (!emotion || emotion === 'all' || box.getAttribute('data-emotion') === emotion) {
+            box.style.opacity = '1';
+          } else {
+            box.style.opacity = '0.2';
+          }
+        });
+
+        document.querySelectorAll('.log-table tbody tr').forEach(row => {
+          if (!emotion || emotion === 'all' || row.getAttribute('data-emotion') === emotion) {
+            row.style.opacity = '1';
+          } else {
+            row.style.opacity = '0.2';
+          }
+        });
+
+        document.querySelectorAll('.donut-segment').forEach(seg => {
+          const name = (seg.getAttribute('data-name') || '').toLowerCase();
+          if (!emotion || emotion === 'all' || name === emotion) {
+            seg.style.opacity = '1';
+          } else {
+            seg.style.opacity = '0.2';
+          }
+        });
+
+        document.querySelectorAll('.stream-curve').forEach(curve => {
+          if (!emotion || emotion === 'all' || curve.getAttribute('data-emotion') === emotion) {
+            curve.style.opacity = '1';
+          } else {
+            curve.style.opacity = '0.2';
+          }
+        });
+      }
+
+      function resetHighlights() {
+        document.querySelectorAll('.segment-box').forEach(b => b.style.opacity = '1');
+        document.querySelectorAll('.log-table tbody tr').forEach(r => r.style.opacity = '1');
+        document.querySelectorAll('.donut-segment').forEach(s => s.style.opacity = '1');
+        document.querySelectorAll('.stream-curve').forEach(c => c.style.opacity = '1');
+      }
+
+      // Filter chips
+      catChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          catChips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          const filter = chip.getAttribute('data-filter');
+          if (filter === 'all') resetHighlights();
+          else highlightEmotion(filter);
+        });
+      });
+
+      // Segment box hover
+      document.querySelectorAll('.segment-box').forEach(box => {
+        box.addEventListener('mouseenter', (e) => {
+          const emotion = box.getAttribute('data-emotion');
+          const meaning = box.getAttribute('data-meaning');
+          highlightEmotion(emotion);
+          showTooltip(e, `<strong>${emotion.toUpperCase()}</strong>: ${meaning}`);
+        });
+        box.addEventListener('mousemove', updateTooltipPos);
+        box.addEventListener('mouseleave', () => { resetHighlights(); hideTooltip(); });
+      });
+
+      // Tooltip positioning
+      function showTooltip(e, html) {
+        if (!tooltip) return;
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        tooltip.style.opacity = '1';
+        updateTooltipPos(e);
+      }
+
+      function updateTooltipPos(e) {
+        if (!tooltip) return;
+        tooltip.style.left = `${e.clientX}px`;
+        tooltip.style.top = `${e.clientY - 14}px`;
+      }
+
+      function hideTooltip() {
+        if (!tooltip) return;
+        tooltip.style.display = 'none';
+        tooltip.style.opacity = '0';
+      }
+    })();
+  </script>
+</body>
+</html>

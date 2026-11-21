@@ -75,7 +75,7 @@ DEFAULT_MIN_IMAGE_BYTES = 512              # 512 Bytes
 DEFAULT_MIN_DIMENSION = 128                # 128 px
 DEFAULT_MAX_DIMENSION = 4096               # 4096 px
 DEFAULT_MIN_FACE_SIZE = 60                 # 60x60 px face bbox minimum
-DEFAULT_BLUR_THRESHOLD = 15.0              # Laplacian variance threshold
+DEFAULT_BLUR_THRESHOLD = 8.0               # Laplacian variance threshold
 DEFAULT_MIN_BRIGHTNESS = 25.0              # Mean pixel intensity
 DEFAULT_MAX_BRIGHTNESS = 235.0             # Mean pixel intensity
 
@@ -316,6 +316,19 @@ def preprocess_and_validate_image(
 
     metadata["width"] = w
     metadata["height"] = h
+
+    # Performance optimization: constrain max image dimension to model input size (640px)
+    max_dim = int(get_validation_setting("INSIGHTFACE_INPUT_MAX_DIM", 640))
+    if max(h, w) > max_dim:
+        scale = max_dim / float(max(h, w))
+        target_w = int(round(w * scale))
+        target_h = int(round(h * scale))
+        img = cv2.resize(img, (target_w, target_h), interpolation=cv2.INTER_AREA)
+        metadata["original_dimensions"] = f"{w}x{h}"
+        metadata["scaled_dimensions"] = f"{target_w}x{target_h}"
+        h, w = target_h, target_w
+        metadata["width"] = w
+        metadata["height"] = h
 
     if not skip_quality_checks:
         quality_info = check_image_quality(img)

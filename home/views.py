@@ -13,7 +13,6 @@ from django.views.decorators.http import require_POST
 from mail import send_mail
 
 
-@login_required(login_url="login")
 def dashboard(request):
     return render(request, "dashboard/dashboard.html")
 
@@ -21,10 +20,60 @@ def dashboard(request):
 def profile(request):
     user = request.user
 
+    # Fetch biometric face registration status & weekly update cooldown
+    has_face_id = False
+    can_update_face = True
+    days_remaining = 0
+    last_face_update = None
+
+    try:
+        from accounts.services import get_face_storage
+        from datetime import datetime, timezone, timedelta
+        storage = get_face_storage()
+        template = storage.get_face_template(user.id)
+        if template:
+            enrollment = template.get("enrollment", {})
+            is_active = enrollment.get("is_active", True)
+            if is_active:
+                has_face_id = True
+                updated_at_raw = enrollment.get("updated_at") or enrollment.get("created_at")
+                if updated_at_raw:
+                    last_dt = None
+                    if isinstance(updated_at_raw, str):
+                        clean_str = updated_at_raw.replace("Z", "+00:00")
+                        try:
+                            last_dt = datetime.fromisoformat(clean_str)
+                        except Exception:
+                            last_dt = None
+                    elif isinstance(updated_at_raw, datetime):
+                        last_dt = updated_at_raw
+
+                    if last_dt:
+                        if last_dt.tzinfo is None:
+                            last_dt = last_dt.replace(tzinfo=timezone.utc)
+                        now_utc = datetime.now(timezone.utc)
+                        diff = now_utc - last_dt
+                        cooldown = timedelta(days=7)
+                        if diff < cooldown:
+                            can_update_face = False
+                            remaining = cooldown - diff
+                            days_remaining = max(1, remaining.days + (1 if remaining.seconds > 0 else 0))
+                        else:
+                            can_update_face = True
+                            days_remaining = 0
+                        last_face_update = last_dt.strftime("%b %d, %Y")
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Error fetching face template for profile: %s", e)
+
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
+        "has_face_id": has_face_id,
+        "can_update_face": can_update_face,
+        "days_remaining": days_remaining,
+        "last_face_update": last_face_update,
     }
 
     return render(request, "dashboard/profile.html", context)

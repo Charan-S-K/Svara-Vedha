@@ -522,9 +522,9 @@
 
             <!-- 1. HOME ICON (Default Active with breathing neon aura) -->
             <div class="relative nav-btn group">
-                <button onclick="setActiveNav(this, 'Home')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center active-nav-pill transition-all transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Home">
+                <a href="{% url 'dashboard' %}" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center active-nav-pill transition-all transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Home">
                     <i data-lucide="home" class="w-5 h-5 transition-transform duration-300 group-hover:-translate-y-0.5"></i>
-                </button>
+                </a>
                 <!-- Active indicator dot -->
                 <span class="active-dot absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-600 hidden md:block"></span>
                 <!-- Floating Tooltip showing icon name -->
@@ -533,57 +533,30 @@
                 </div>
             </div>
 
-            <!-- 2. AI-BOT ICON (Animated Nodding Head + Radar Beacon) -->
+            <!-- 2. PROFILE ICON -->
             <div class="relative nav-btn group">
-                <button onclick="openAiBotDrawer()" class="nav-item-btn relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-md group-hover:shadow-brand-500/20 active:scale-95 border border-slate-200/60 dark:border-slate-700 cursor-pointer" aria-label="AI Voice Coach">
-                    <div class="animate-bot-bob">
-                        <i data-lucide="bot" class="w-5 h-5 text-brand-600 dark:text-brand-400"></i>
-                    </div>
-                    <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                </button>
-                <div class="nav-tooltip flex items-center gap-1.5">
-                    <span>AI Voice Coach</span>
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <a href="{% url 'profile' %}" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-md group-hover:shadow-brand-500/20 active:scale-95 border border-slate-200/60 dark:border-slate-700 cursor-pointer" aria-label="Profile">
+                    <i data-lucide="user" class="w-5 h-5 transition-transform duration-300 group-hover:-translate-y-0.5"></i>
+                </a>
+                <div class="nav-tooltip">
+                    Profile
                 </div>
             </div>
 
-            <!-- 3. INFO ICON -->
+            <!-- 3. VOICE ANALYSIS (MICROPHONE) ICON -->
             <div class="relative nav-btn group">
-                <button onclick="openSystemDiagnostics()" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-6 active:scale-95 cursor-pointer" aria-label="Diagnostics & Specs">
-                    <i data-lucide="info" class="w-5 h-5"></i>
-                </button>
+                <a href="{% url 'voice_record' %}" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-md group-hover:shadow-brand-500/20 active:scale-95 border border-slate-200/60 dark:border-slate-700 cursor-pointer" aria-label="Voice Analysis">
+                    <i data-lucide="mic" class="w-5 h-5 text-brand-600 dark:text-brand-400 transition-transform duration-300 group-hover:-translate-y-0.5"></i>
+                </a>
                 <div class="nav-tooltip">
-                    Diagnostics & Specs
-                </div>
-            </div>
-
-            <!-- 4. APPS / GRID ICON -->
-            <div class="relative nav-btn group">
-                <button onclick="setActiveNav(this, 'Apps & Integrations')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-6 active:scale-95 cursor-pointer" aria-label="Workspace Apps">
-                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                </button>
-                <div class="nav-tooltip">
-                    Workspace Apps
-                </div>
-            </div>
-
-            <!-- 5. SEARCH ICON -->
-            <div class="relative nav-btn group">
-                <button onclick="setActiveNav(this, 'Voice Archive Search')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Search Recordings">
-                    <i data-lucide="search" class="w-5 h-5"></i>
-                </button>
-                <div class="nav-tooltip">
-                    Voice Search
+                    Voice Analysis
                 </div>
             </div>
 
             <!-- Separator Line -->
             <div class="w-6 h-px md:w-8 md:h-px bg-slate-200/80 dark:bg-slate-700 my-0.5"></div>
 
-            <!-- 6. SUN (LIGHT MODE) ICON (Rotating micro-interaction) -->
+            <!-- 4. SUN (LIGHT MODE) ICON (Rotating micro-interaction) -->
             <div class="relative nav-btn group">
                 <button onclick="switchTheme('light')" class="icon-sun nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800 flex items-center justify-center transition-all active:scale-95 cursor-pointer" aria-label="Light Theme">
                     <i data-lucide="sun" class="w-5 h-5"></i>
@@ -593,7 +566,7 @@
                 </div>
             </div>
 
-            <!-- 7. MOON (DARK MODE) ICON (Tilting micro-interaction) -->
+            <!-- 5. MOON (DARK MODE) ICON (Tilting micro-interaction) -->
             <div class="relative nav-btn group">
                 <button onclick="switchTheme('dark')" class="icon-moon nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-slate-800 flex items-center justify-center transition-all active:scale-95 cursor-pointer" aria-label="Dark Theme">
                     <i data-lucide="moon" class="w-5 h-5"></i>
@@ -610,7 +583,7 @@
     <main class="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 flex flex-col justify-center items-center relative z-10">
 
         <!-- ==================== VOICE IMPORTANCE SHOWCASE HERO WITH MASKED TEXT ==================== -->
-        <div id="voiceHeroShowcase" class="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden p-7 sm:p-9 mb-8 sm:mb-10 border border-slate-200/80 dark:border-slate-800/90 shadow-xl transition-all duration-500 bg-white/75 dark:bg-slate-900/85 backdrop-blur-xl group">
+        <div id="voiceHeroShowcase" class="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden p-7 sm:p-9 mb-4 border border-slate-200/80 dark:border-slate-800/90 shadow-xl transition-all duration-500 bg-white/75 dark:bg-slate-900/85 backdrop-blur-xl group">
             
             <!-- Changing Voice Importance Background Visual (Cross-fading with Ken Burns subtle motion) -->
             <div id="heroBgImage" class="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105 opacity-25 dark:opacity-35 pointer-events-none"></div>
@@ -646,166 +619,16 @@
                     <button onclick="setVoiceSlide(3)" class="voice-slide-dot w-2 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-brand-400 transition-all cursor-pointer" title="Emotional Mirror"></button>
                 </div>
 
+                <!-- Dedicated Voice Analysis Direct Feature Link -->
+                <div class="pt-3">
+                    <a href="{% url 'voice_record' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-950 font-bold text-xs sm:text-sm shadow-md hover:shadow-lg hover:scale-105 transition-all">
+                        <i data-lucide="waveform" class="w-4 h-4"></i>
+                        <span>Dedicated Voice Analysis (Stress, Strain &amp; Emotions)</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
             </div>
-        </div>
-
-        <!-- TWO CORE FEATURE CARDS (PERFECTLY BALANCED & ALIGNED) -->
-        <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mx-auto">
-
-            <!-- ==================== CARD 1: UPLOAD AUDIO (FILE DROPPING INTO BOX ANIMATION) ==================== -->
-            <div class="hover-lift-box glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between group">
-                
-                <!-- Card Title & Purple Cloud Icon -->
-                <div class="text-center space-y-1.5 mb-5">
-                    <div class="w-14 h-14 mx-auto rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-100 dark:border-brand-800 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                        <i data-lucide="cloud-upload" class="w-7 h-7"></i>
-                    </div>
-                    <h2 class="font-heading font-bold text-xl text-slate-900 dark:text-white pt-1">Upload Audio</h2>
-                    <p class="text-xs text-slate-400 dark:text-slate-400">Choose an audio file from your device</p>
-                </div>
-
-                <!-- ANIMATED AUDIO DROP ZONE WITH FILE-DROPPING-INTO-BOX ANIMATION (NO BOUNCING BARS) -->
-                <div id="dropzoneBox" onclick="document.getElementById('audioFileInput').click()" class="dropzone-box relative rounded-2xl p-6 sm:p-8 text-center cursor-pointer overflow-hidden transition-all duration-300 bg-brand-50/20 dark:bg-brand-950/20 hover:bg-brand-50/40 dark:hover:bg-brand-950/30 border border-transparent">
-                    
-                    <!-- Hidden native file input -->
-                    <input type="file" id="audioFileInput" class="hidden" accept=".wav,.mp3,.m4a,audio/*" onchange="handleAudioUpload(event)">
-
-                    <!-- SVG Animated Marching-Dash Border -->
-                    <svg class="absolute inset-0 w-full h-full pointer-events-none rounded-2xl" preserveAspectRatio="none">
-                        <rect x="2" y="2" width="98.5%" height="97%" rx="16" ry="16" fill="none" stroke="#a78bfa" stroke-width="2" class="running-border-path"></rect>
-                    </svg>
-
-                    <!-- Sweeping Light Beam Effect -->
-                    <div class="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent pointer-events-none animate-light-beam"></div>
-
-                    <!-- ==================== ANIMATION: FILE DROPPING INSIDE THE RECEIVING BOX ==================== -->
-                    <div class="relative w-28 h-24 mx-auto mb-4 flex items-center justify-center">
-                        
-                        <!-- Radar Expanding Shockwaves -->
-                        <div class="absolute inset-0 rounded-2xl bg-brand-400/20 radar-ring-1 pointer-events-none"></div>
-                        <div class="absolute inset-0 rounded-2xl bg-indigo-400/15 radar-ring-2 pointer-events-none"></div>
-
-                        <!-- Floating Dropping File Document with Sound Waves -->
-                        <div class="file-drop-anim absolute z-20 flex flex-col items-center pointer-events-none">
-                            <div class="w-9 h-11 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-lg flex flex-col items-center justify-center relative border border-white/50">
-                                <!-- Corner Fold Accent -->
-                                <div class="absolute top-0 right-0 w-2.5 h-2.5 bg-white/35 rounded-bl-sm"></div>
-                                <i data-lucide="file-audio" class="w-4 h-4 text-white"></i>
-                                <div class="flex gap-0.5 mt-0.5">
-                                    <span class="w-0.5 h-1.5 bg-white/80 rounded-full"></span>
-                                    <span class="w-0.5 h-2.5 bg-white rounded-full"></span>
-                                    <span class="w-0.5 h-1 bg-white/80 rounded-full"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Receiving 3D Box Receiver with Glowing Target Slot -->
-                        <div class="box-receiver relative z-10 w-16 h-12 rounded-2xl bg-gradient-to-b from-brand-100 to-indigo-100 dark:from-brand-900/60 dark:to-indigo-950/60 border-2 border-brand-400/70 dark:border-brand-500/60 flex flex-col items-center justify-end pb-1.5 shadow-md shadow-brand-500/15">
-                            <!-- Glowing Slot Flash -->
-                            <div class="box-slot-glow w-10 h-1.5 rounded-full bg-brand-500/80 mb-1"></div>
-                            <i data-lucide="inbox" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
-                        </div>
-
-                    </div>
-
-                    <!-- Drop Instructions -->
-                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                        Drag &amp; drop an audio file here
-                    </p>
-                    <p class="text-xs text-slate-400 dark:text-slate-400 mt-0.5">or click to browse</p>
-                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Supports: WAV, MP3, M4A (Max 10 MB)</p>
-
-                    <!-- Selected File Feedback -->
-                    <div id="fileUploadFeedback" class="mt-3 py-1.5 px-3 rounded-lg bg-brand-100/90 dark:bg-brand-900/50 text-xs font-semibold text-brand-700 dark:text-brand-300 hidden inline-flex items-center gap-1.5">
-                        <i data-lucide="check" class="w-3.5 h-3.5 text-brand-600"></i>
-                        <span id="fileUploadFeedbackText"></span>
-                    </div>
-                </div>
-
-                <!-- Purple Choose File Button + Instant Analyze Action -->
-                <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5">
-                    <button onclick="document.getElementById('audioFileInput').click()" class="w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-500/25 hover:shadow-lg hover:shadow-brand-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <i data-lucide="folder-open" class="w-4 h-4"></i>
-                        <span>Choose File</span>
-                    </button>
-                    
-                    <button id="btnRunUploadAnalysis" onclick="runAnalysisForCurrentAudio()" class="hidden py-3 px-4 rounded-xl bg-slate-900 dark:bg-brand-600 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-                        <span>Analyze</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ==================== CARD 2: AUDIO RECORDING (CLEAN PLAYER & CONTROLS) ==================== -->
-            <div class="hover-lift-box glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between group">
-                
-                <!-- Card Title & Cyan Microphone Icon -->
-                <div class="text-center space-y-1.5 mb-5">
-                    <div class="w-14 h-14 mx-auto rounded-2xl bg-teal-50 dark:bg-teal-950/30 text-teal-500 flex items-center justify-center border border-teal-100 dark:border-teal-900/40 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                        <i data-lucide="mic" class="w-7 h-7"></i>
-                    </div>
-                    <h2 class="font-heading font-bold text-xl text-slate-900 dark:text-white pt-1">Audio Recording</h2>
-                    <p class="text-xs text-slate-400 dark:text-slate-400">Record your voice directly</p>
-                </div>
-
-                <!-- INTEGRATED AUDIO PLAYER & RECORDING STATUS CONTAINER (MATCHING DROPZONE) -->
-                <div class="rounded-2xl p-6 sm:p-7 bg-teal-50/20 dark:bg-teal-950/15 border border-slate-200/60 dark:border-slate-800 flex flex-col justify-center space-y-5">
-                    
-                    <!-- Clean Minimalist Audio Player Bar -->
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-xs">
-                        <!-- Play/Pause Button -->
-                        <button id="playerPlayBtn" onclick="togglePlayPreview()" class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex-shrink-0 cursor-pointer">
-                            <i data-lucide="play" id="playerPlayIcon" class="w-4 h-4 ml-0.5"></i>
-                        </button>
-
-                        <!-- Timer Indicator -->
-                        <span id="playerTimer" class="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300 flex-shrink-0">
-                            0:00 / 0:00
-                        </span>
-
-                        <!-- Audio Scrubber / Track Bar -->
-                        <div class="flex-1 relative flex items-center group/scrubber cursor-pointer py-1" onclick="scrubAudio(event)">
-                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                                <div id="playerProgressBar" class="bg-teal-500 h-1.5 rounded-full transition-all" style="width: 0%"></div>
-                            </div>
-                            <div id="playerKnob" class="absolute left-0 w-3 h-3 bg-white border-2 border-teal-500 rounded-full shadow-sm -ml-1 opacity-0 group-hover/scrubber:opacity-100 transition-opacity pointer-events-none"></div>
-                        </div>
-
-                        <!-- Volume Icon -->
-                        <button onclick="toggleMute()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer" title="Mute/Unmute">
-                            <i data-lucide="volume-2" id="volumeIcon" class="w-4 h-4"></i>
-                        </button>
-
-                        <!-- Options 3 Dots -->
-                        <button onclick="openSystemDiagnostics()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer" title="Diagnostics & Specs">
-                            <i data-lucide="more-vertical" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-
-                    <!-- Live Status Pill -->
-                    <div class="flex items-center justify-between text-xs px-1">
-                        <span id="recordingStatusBadge" class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
-                            <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                            <span id="statusIndicatorText">Microphone ready</span>
-                        </span>
-                        <span id="liveTimerDisplay" class="font-mono text-teal-600 dark:text-teal-400 font-bold hidden">REC 00:00</span>
-                    </div>
-                </div>
-
-                <!-- Teal Start Recording Button -->
-                <div class="pt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5">
-                    <button id="btnRecordingToggle" onclick="toggleLiveRecording()" class="w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-teal-400 via-cyan-500 to-teal-400 text-white text-xs sm:text-sm font-bold shadow-md shadow-cyan-500/25 hover:shadow-lg hover:shadow-cyan-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <i data-lucide="mic" id="recBtnIcon" class="w-4 h-4"></i>
-                        <span id="recBtnLabel">Start Recording</span>
-                    </button>
-                    
-                    <button id="btnRunRecordAnalysis" onclick="runAnalysisForCurrentAudio()" class="hidden py-3 px-4 rounded-xl bg-slate-900 dark:bg-teal-600 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-                        <span>Analyze</span>
-                    </button>
-                </div>
-            </div>
-
         </div>
 
     </main>
@@ -870,70 +693,7 @@
         </div>
     </div>
 
-    <!-- ==================== STRESS ANALYSIS RESULT MODAL ==================== -->
-    <div id="analysisModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-slide-up">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
-                        <i data-lucide="activity" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-heading font-bold text-lg text-slate-900 dark:text-white">Acoustic Biomarker Report</h3>
-                        <p class="text-[11px] text-slate-400">SVARAABHAVA Deep Voice Stress Engine</p>
-                    </div>
-                </div>
-                <button onclick="closeAnalysisModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg cursor-pointer">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
 
-            <div class="p-4 rounded-2xl bg-gradient-to-br from-brand-50/70 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/60 border border-brand-100/60 dark:border-slate-700 flex items-center justify-between">
-                <div>
-                    <span class="text-[11px] font-semibold text-brand-700 dark:text-brand-300 uppercase tracking-wider">Overall Vocal Strain</span>
-                    <h4 class="font-heading font-extrabold text-2xl text-slate-900 dark:text-white mt-0.5">21% • Low Stress</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Normal vocal folds phonation. No chronic strain markers.</p>
-                </div>
-                <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-base shadow-sm">
-                    ✓ Normal
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Fundamental (F0)</span>
-                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">134.2 Hz</div>
-                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Stable Pitch</span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Jitter (Microtremor)</span>
-                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">0.42 %</div>
-                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">&lt; 1.0% Optimal</span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Shimmer (Amplitude)</span>
-                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">1.85 %</div>
-                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400">Healthy Glottal Wave</span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Harmonics-to-Noise</span>
-                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">22.6 dB</div>
-                    <span class="text-[10px] text-brand-600 dark:text-brand-400">Clean Resonance</span>
-                </div>
-            </div>
-
-            <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
-                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
-                <span>Vocal cords show healthy acoustic resonance. Maintain hydration and periodic vocal rests during long speaking sessions.</span>
-            </div>
-
-            <div class="pt-2 flex justify-end gap-2">
-                <button onclick="closeAnalysisModal()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs transition-colors cursor-pointer">
-                    Done
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- ==================== SYSTEM DIAGNOSTICS MODAL ==================== -->
     <div id="diagnosticsModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
@@ -985,18 +745,6 @@
 
     <!-- ==================== INTERACTIVE SCRIPTS ==================== -->
     <script>
-        let isRecordingActive = false;
-        let recordingTimer = 0;
-        let recInterval = null;
-        let isAudioPlaying = false;
-        let playTimerInterval = null;
-        let playProgress = 0;
-        let mediaRecorder = null;
-        let recordedAudioChunks = [];
-        let currentAudioElement = new Audio();
-        let isMuted = false;
-        let currentLoadedAudioUrl = null;
-
         function showProfileToast() {
             const nameEl = document.querySelector('.user-display-name');
             const name = nameEl ? nameEl.innerText.trim() : 'Username';
@@ -1022,43 +770,12 @@
             sanitize('.welcome-user-name', 'Username!');
 
             lucide.createIcons();
-            setupDropzone();
             
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
             }
-
-            // Audio element listeners
-            currentAudioElement.addEventListener('timeupdate', () => {
-                if (!currentAudioElement.duration) return;
-                const current = currentAudioElement.currentTime;
-                const total = currentAudioElement.duration;
-                playProgress = (current / total) * 100;
-                
-                document.getElementById('playerProgressBar').style.width = `${playProgress}%`;
-                const knob = document.getElementById('playerKnob');
-                if (knob) knob.style.left = `${playProgress}%`;
-                
-                document.getElementById('playerTimer').innerText = 
-                    `${formatTime(Math.floor(current))} / ${formatTime(Math.floor(total))}`;
-            });
-
-            currentAudioElement.addEventListener('ended', () => {
-                isAudioPlaying = false;
-                const icon = document.getElementById('playerPlayIcon');
-                icon.setAttribute('data-lucide', 'play');
-                lucide.createIcons();
-                document.getElementById('playerProgressBar').style.width = '0%';
-            });
         });
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds < 0) return "0:00";
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
 
         /* ================= NAVBAR DOCK INTERACTION ================= */
         function setActiveNav(btnElement, navName) {
@@ -1155,249 +872,7 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        /* ================= DRAG AND DROP & UPLOAD ================= */
-        function setupDropzone() {
-            const dropzone = document.getElementById('dropzoneBox');
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    dropzone.classList.add('dragover');
-                }, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    dropzone.classList.remove('dragover');
-                }, false);
-            });
-
-            dropzone.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                if (files.length > 0) {
-                    handleFile(files[0]);
-                }
-            });
-        }
-
-        function handleAudioUpload(e) {
-            if (e.target.files && e.target.files[0]) {
-                handleFile(e.target.files[0]);
-            }
-        }
-
-        function handleFile(file) {
-            const feedback = document.getElementById('fileUploadFeedback');
-            const feedbackText = document.getElementById('fileUploadFeedbackText');
-            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-            
-            feedbackText.innerText = `${file.name} (${sizeMB} MB)`;
-            feedback.classList.remove('hidden');
-
-            if (currentLoadedAudioUrl) {
-                URL.revokeObjectURL(currentLoadedAudioUrl);
-            }
-            currentLoadedAudioUrl = URL.createObjectURL(file);
-            currentAudioElement.src = currentLoadedAudioUrl;
-            currentAudioElement.load();
-            
-            currentAudioElement.onloadedmetadata = () => {
-                const dur = Math.floor(currentAudioElement.duration || 0);
-                document.getElementById('playerTimer').innerText = `0:00 / ${formatTime(dur)}`;
-            };
-
-            document.getElementById('btnRunUploadAnalysis').classList.remove('hidden');
-            document.getElementById('recordingStatusBadge').innerHTML = `
-                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
-                <span class="text-brand-700 dark:text-brand-300 font-semibold truncate max-w-[140px]">${file.name} loaded</span>
-            `;
-
-            showToast(`Loaded "${file.name}" ready to analyze!`);
-        }
-
-        /* ================= LIVE RECORDING CONTROLS ================= */
-        async function toggleLiveRecording() {
-            if (!isRecordingActive) {
-                startRecording();
-            } else {
-                stopRecording();
-            }
-        }
-
-        async function startRecording() {
-            isRecordingActive = true;
-            recordingTimer = 0;
-            recordedAudioChunks = [];
-            
-            const btn = document.getElementById('btnRecordingToggle');
-            const label = document.getElementById('recBtnLabel');
-            const icon = document.getElementById('recBtnIcon');
-            const dot = document.getElementById('statusIndicatorDot');
-            const text = document.getElementById('statusIndicatorText');
-            const timerDisplay = document.getElementById('liveTimerDisplay');
-
-            btn.className = "w-full sm:w-56 py-3 px-5 rounded-xl bg-rose-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-rose-500/25 hover:shadow-lg hover:shadow-rose-500/35 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer";
-            label.innerText = "Stop Recording";
-            icon.setAttribute('data-lucide', 'square');
-            
-            dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
-            text.innerText = "Recording voice audio...";
-            timerDisplay.classList.remove('hidden');
-
-            try {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) recordedAudioChunks.push(e.data);
-                    };
-                    mediaRecorder.start();
-                }
-            } catch (err) {
-                console.warn("Microphone access fallback:", err);
-            }
-
-            recInterval = setInterval(() => {
-                recordingTimer++;
-                const formatted = formatTime(recordingTimer);
-                timerDisplay.innerText = `REC ${formatted}`;
-                document.getElementById('playerTimer').innerText = `${formatted} / ${formatted}`;
-            }, 1000);
-
-            lucide.createIcons();
-            showToast("Recording started. Speak naturally.");
-        }
-
-        function stopRecording() {
-            isRecordingActive = false;
-            clearInterval(recInterval);
-
-            const btn = document.getElementById('btnRecordingToggle');
-            const label = document.getElementById('recBtnLabel');
-            const icon = document.getElementById('recBtnIcon');
-            const dot = document.getElementById('statusIndicatorDot');
-            const text = document.getElementById('statusIndicatorText');
-            const timerDisplay = document.getElementById('liveTimerDisplay');
-
-            btn.className = "w-full sm:w-56 py-3 px-5 rounded-xl bg-gradient-to-r from-teal-400 via-cyan-500 to-teal-400 text-white text-xs sm:text-sm font-bold shadow-md shadow-cyan-500/25 hover:shadow-lg hover:shadow-cyan-500/35 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer";
-            label.innerText = "Start Recording";
-            icon.setAttribute('data-lucide', 'mic');
-
-            dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-            text.innerText = "Audio captured ready for analysis";
-            timerDisplay.classList.add('hidden');
-
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(recordedAudioChunks, { type: 'audio/webm' });
-                    if (currentLoadedAudioUrl) URL.revokeObjectURL(currentLoadedAudioUrl);
-                    currentLoadedAudioUrl = URL.createObjectURL(audioBlob);
-                    currentAudioElement.src = currentLoadedAudioUrl;
-                    currentAudioElement.load();
-                };
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            } else {
-                document.getElementById('playerTimer').innerText = `0:00 / ${formatTime(recordingTimer)}`;
-            }
-
-            document.getElementById('btnRunRecordAnalysis').classList.remove('hidden');
-
-            lucide.createIcons();
-            showToast("Recording saved. Analyzing voice metrics...");
-        }
-
-        /* ================= AUDIO PLAYER CONTROLS ================= */
-        function togglePlayPreview() {
-            const playIcon = document.getElementById('playerPlayIcon');
-            const progressBar = document.getElementById('playerProgressBar');
-
-            if (currentAudioElement.src && currentAudioElement.duration) {
-                if (currentAudioElement.paused) {
-                    currentAudioElement.play();
-                    playIcon.setAttribute('data-lucide', 'pause');
-                    showToast("Playing voice audio preview...");
-                } else {
-                    currentAudioElement.pause();
-                    playIcon.setAttribute('data-lucide', 'play');
-                    showToast("Playback paused");
-                }
-                lucide.createIcons();
-                return;
-            }
-
-            isAudioPlaying = !isAudioPlaying;
-            if (isAudioPlaying) {
-                playIcon.setAttribute('data-lucide', 'pause');
-                showToast("Playing voice audio sample...");
-                
-                playTimerInterval = setInterval(() => {
-                    playProgress += 5;
-                    if (playProgress > 100) {
-                        playProgress = 0;
-                        isAudioPlaying = false;
-                        clearInterval(playTimerInterval);
-                        playIcon.setAttribute('data-lucide', 'play');
-                        lucide.createIcons();
-                    }
-                    progressBar.style.width = `${playProgress}%`;
-                    const knob = document.getElementById('playerKnob');
-                    if (knob) knob.style.left = `${playProgress}%`;
-                }, 250);
-            } else {
-                clearInterval(playTimerInterval);
-                playIcon.setAttribute('data-lucide', 'play');
-                showToast("Playback paused");
-            }
-            lucide.createIcons();
-        }
-
-        function scrubAudio(e) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const width = rect.width;
-            playProgress = Math.max(0, Math.min(100, (clickX / width) * 100));
-            
-            document.getElementById('playerProgressBar').style.width = `${playProgress}%`;
-            const knob = document.getElementById('playerKnob');
-            if (knob) knob.style.left = `${playProgress}%`;
-
-            if (currentAudioElement.src && currentAudioElement.duration) {
-                currentAudioElement.currentTime = (playProgress / 100) * currentAudioElement.duration;
-            }
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            currentAudioElement.muted = isMuted;
-            const icon = document.getElementById('volumeIcon');
-            if (isMuted) {
-                icon.setAttribute('data-lucide', 'volume-x');
-                showToast("Audio muted");
-            } else {
-                icon.setAttribute('data-lucide', 'volume-2');
-                showToast("Volume unmuted (100%)");
-            }
-            lucide.createIcons();
-        }
-
-        /* ================= MODAL & DIAGNOSTICS ================= */
-        function runAnalysisForCurrentAudio() {
-            showToast("Calculating jitter, shimmer & vocal tension...");
-            setTimeout(() => {
-                document.getElementById('analysisModal').classList.remove('hidden');
-                document.getElementById('analysisModal').classList.add('flex');
-            }, 700);
-        }
-
-        function closeAnalysisModal() {
-            document.getElementById('analysisModal').classList.add('hidden');
-            document.getElementById('analysisModal').classList.remove('flex');
-            showToast("Report saved to voice diagnostics archive");
-        }
-
+        /* ================= DIAGNOSTICS ================= */
         function openSystemDiagnostics() {
             document.getElementById('diagnosticsModal').classList.remove('hidden');
             document.getElementById('diagnosticsModal').classList.add('flex');

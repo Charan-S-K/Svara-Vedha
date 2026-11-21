@@ -28,6 +28,7 @@ from .face_similarity import (
     calculate_cosine_similarity,
     compare_face_embeddings,
     verify_user_face,
+    identify_face_candidate,
 )
 from .geofence import (
     GeofenceValidationError,
@@ -55,6 +56,7 @@ from .mongo_connection import (
 )
 from .face_repository import (
     MongoFaceRepository,
+    LocalEncryptedFaceRepository,
     DuplicateEnrollmentError,
     TemplateNotFoundError,
     InactiveTemplateError,

@@ -11,6 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 import json
 import logging
+import time
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ from .services import (
     FaceRecognitionError,
     extract_face_embedding,
     compare_face_embeddings,
+    identify_face_candidate,
     get_face_storage,
     StorageNotConfiguredError,
     DuplicateEnrollmentError,
@@ -399,9 +401,10 @@ def _parse_request_data(request):
 def face_enroll_api(request):
     """
     Backend face enrollment endpoint (Phase 4).
-    Enrolls a fresh 512-D ArcFace template for the authenticated Django user in MongoDB Atlas.
+    Enrolls a fresh 512-D ArcFace template for the authenticated Django user in storage.
     Supports authenticated re-enrollment when explicitly requested.
     """
+    t_req_start = time.perf_counter()
     logger.info(
         "[ENROLLMENT STAGE 1] Enrollment request received: method=%s, path=%s, remote_ip=%s",
         request.method,
@@ -434,18 +437,12 @@ def face_enroll_api(request):
         logger.warning("[ENROLLMENT STAGE 3 FAILED] No face image payload provided for enrollment.")
         return JsonResponse({"success": False, "error": "No face image provided for enrollment."}, status=400)
 
-    img_format = "base64_data_url" if isinstance(face_image, str) and face_image.startswith("data:") else "raw_string"
-    logger.info(
-        "[ENROLLMENT STAGE 3] Face image received: format=%s, payload_length=%d characters, re_enroll=%s",
-        img_format,
-        len(face_image),
-        re_enroll,
-    )
-
     try:
         extraction_result = extract_face_embedding(face_image)
         embedding = extraction_result["embedding"]
+        timing_metrics = extraction_result.get("timing_metrics", {})
 
+        t_db_start = time.perf_counter()
         storage = get_face_storage()
         persisted = storage.save_face_template(
             user_id=request.user.id,
@@ -457,6 +454,7 @@ def face_enroll_api(request):
             },
             overwrite=re_enroll,
         )
+        t_db_end = time.perf_counter()
 
         if not persisted:
             logger.error("[ENROLLMENT STAGE 10 FAILED] Storage backend returned false for persistence.")
@@ -465,14 +463,40 @@ def face_enroll_api(request):
                 status=500,
             )
 
-        logger.info("[ENROLLMENT COMPLETE] Biometric face template successfully enrolled for user_id=%s.", request.user.id)
+        t_total_end = time.perf_counter()
+        decode_ms = timing_metrics.get("decode_and_validate_ms", 0.0)
+        det_ms = timing_metrics.get("detection_ms", 0.0)
+        emb_ms = timing_metrics.get("embedding_ms", 0.0)
+        db_write_ms = (t_db_end - t_db_start) * 1000
+        total_backend_ms = (t_total_end - t_req_start) * 1000
+
+        logger.info(
+            "\n======================================================\n"
+            "[FACE ENROLLMENT PERFORMANCE PROFILE]\n"
+            f"  User:                     {request.user.username} (ID: {request.user.id})\n"
+            f"  Image Decode & Validate:  {decode_ms:.1f}ms\n"
+            f"  Face Detection:           {det_ms:.1f}ms\n"
+            f"  ArcFace Embedding:        {emb_ms:.1f}ms\n"
+            f"  Database Storage Write:   {db_write_ms:.1f}ms\n"
+            "  ----------------------------------------------------\n"
+            f"  Total Backend Latency:    {total_backend_ms:.1f}ms\n"
+            "======================================================"
+        )
+
         return JsonResponse({
             "success": True,
             "message": "Biometric face template enrolled successfully.",
             "redirect_url": "/dashboard/",
+            "timings": {
+                "decode_ms": round(decode_ms, 1),
+                "detection_ms": round(det_ms, 1),
+                "embedding_ms": round(emb_ms, 1),
+                "db_write_ms": round(db_write_ms, 1),
+                "total_backend_ms": round(total_backend_ms, 1),
+            },
         })
 
-    except DuplicateEnrollmentError as e:
+    except DuplicateEnrollmentError:
         logger.info("[ENROLLMENT DUPLICATE] Duplicate enrollment detected for user_id=%s.", request.user.id)
         return JsonResponse({
             "success": False,
@@ -483,7 +507,7 @@ def face_enroll_api(request):
         logger.error("[ENROLLMENT STORAGE ERROR] Storage not configured: %s", str(e))
         return JsonResponse({
             "success": False,
-            "error": "Biometric template storage is not configured. Face template cannot be saved until MongoDB is connected.",
+            "error": "Biometric template storage is not configured.",
             "code": "storage_not_configured",
         }, status=503)
     except FaceValidationError as e:
@@ -497,9 +521,11 @@ def face_enroll_api(request):
 def face_login_api(request):
     """
     Backend face login endpoint (Phase 5).
-    Verifies probe face embedding against stored reference template in MongoDB and authenticates Django session.
+    Verifies probe face embedding against stored reference template(s) in storage and authenticates Django session.
+    Supports both 1:1 verification (with identifier) and 1:N identification (face-only).
     Cycles session key on successful authentication.
     """
+    t_req_start = time.perf_counter()
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Method not allowed. Use POST."}, status=405)
 
@@ -509,13 +535,6 @@ def face_login_api(request):
 
     if not identifier and request.user.is_authenticated:
         identifier = request.user.email or request.user.username
-
-    if not identifier:
-        return JsonResponse({
-            "success": False,
-            "error": "Account identifier (email or username) is required for face sign in.",
-            "code": "missing_identifier",
-        }, status=400)
 
     if not face_image:
         return JsonResponse({"success": False, "error": "No face image provided for verification."}, status=400)
@@ -529,16 +548,27 @@ def face_login_api(request):
             "code": "rate_limited",
         }, status=429)
 
-    user = User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
-    if not user:
-        return JsonResponse({"success": False, "error": "No account found matching this identifier.", "code": "user_not_found"}, status=404)
-
     try:
         extraction_result = extract_face_embedding(face_image)
         probe_embedding = extraction_result["embedding"]
+        timing_metrics = extraction_result.get("timing_metrics", {})
+    except FaceValidationError as e:
+        return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
+    except Exception as e:
+        logger.exception("[FACE LOGIN EXTRACTION ERROR] %s", str(e))
+        return JsonResponse({"success": False, "error": f"Face extraction failed: {str(e)}"}, status=400)
 
-        storage = get_face_storage()
+    storage = get_face_storage()
+    t_db_start = time.perf_counter()
+
+    # Case 1: 1:1 Face Verification (identifier provided)
+    if identifier:
+        user = User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
+        if not user:
+            return JsonResponse({"success": False, "error": "No account found matching this identifier.", "code": "user_not_found"}, status=404)
+
         template_record = storage.get_face_template(user.id)
+        t_db_end = time.perf_counter()
 
         if template_record is None or "embedding" not in template_record:
             return JsonResponse({
@@ -556,38 +586,111 @@ def face_login_api(request):
                 "code": "template_inactive",
             }, status=403)
 
+        t_sim_start = time.perf_counter()
         stored_embedding = template_record["embedding"]
         sim_result = compare_face_embeddings(probe_embedding, stored_embedding)
+        t_sim_end = time.perf_counter()
 
         if not sim_result["is_match"]:
             request.session["face_login_failed_attempts"] = failed_attempts + 1
+            logger.warning("[FACE LOGIN FAILED] Score %.4f < threshold %.4f for user=%s", sim_result["similarity"], sim_result["threshold"], user.username)
             return JsonResponse({
                 "success": False,
-                "error": "Face verification failed.",
+                "error": f"Face verification failed. Similarity score ({sim_result['similarity']:.2f}) is below security threshold ({sim_result['threshold']:.2f}).",
                 "code": "face_mismatch",
+                "similarity": sim_result["similarity"],
+                "threshold": sim_result["threshold"],
             }, status=401)
 
-        # Successful face verification -> reset counter, authenticate Django session, cycle session key
-        request.session.pop("face_login_failed_attempts", None)
-        auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-        request.session.cycle_key()
+    # Case 2: 1:N Face Identification (no identifier provided, face-only lookup)
+    else:
+        active_templates = storage.get_all_active_templates()
+        t_db_end = time.perf_counter()
 
-        return JsonResponse({
-            "success": True,
-            "message": f"Welcome back, {user.first_name or user.username}! Identity verified.",
-            "redirect_url": "/dashboard/",
-        })
+        if not active_templates:
+            return JsonResponse({
+                "success": False,
+                "error": "No registered face templates exist in the system. Please enroll your face first or enter your account email.",
+                "code": "no_templates_enrolled",
+            }, status=404)
 
-    except StorageNotConfiguredError:
-        return JsonResponse({
-            "success": False,
-            "error": "Biometric template storage is not configured. Please connect your MongoDB implementation to enable face sign-in.",
-            "code": "storage_not_configured",
-        }, status=503)
-    except FaceValidationError as e:
-        return JsonResponse({"success": False, "error": str(e), "code": getattr(e, "code", "validation_error")}, status=400)
-    except Exception as e:
-        return JsonResponse({"success": False, "error": f"Face verification failed: {str(e)}"}, status=500)
+        t_sim_start = time.perf_counter()
+        id_result = identify_face_candidate(probe_embedding, active_templates)
+        t_sim_end = time.perf_counter()
+
+        if not id_result["matched"]:
+            request.session["face_login_failed_attempts"] = failed_attempts + 1
+            logger.warning("[FACE LOGIN 1:N FAILED] Best score %.4f < threshold %.4f", id_result.get("similarity", 0), id_result.get("threshold", 0.50))
+            return JsonResponse({
+                "success": False,
+                "error": f"Face not recognized. Similarity score ({id_result['similarity']:.2f}) did not meet security threshold ({id_result['threshold']:.2f}).",
+                "code": "face_mismatch",
+                "similarity": id_result["similarity"],
+                "threshold": id_result["threshold"],
+            }, status=401)
+
+        matched_user_id = id_result["user_id"]
+        user = User.objects.filter(id=matched_user_id, is_active=True).first()
+        if not user:
+            return JsonResponse({
+                "success": False,
+                "error": "Matched user account is inactive or not found.",
+                "code": "account_inactive",
+            }, status=403)
+
+        sim_result = {
+            "similarity": id_result["similarity"],
+            "threshold": id_result["threshold"],
+            "is_match": True,
+        }
+
+    # Successful authentication
+    t_auth_start = time.perf_counter()
+    request.session.pop("face_login_failed_attempts", None)
+    auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    request.session.cycle_key()
+    t_auth_end = time.perf_counter()
+
+    t_total_end = time.perf_counter()
+    decode_ms = timing_metrics.get("decode_and_validate_ms", 0.0)
+    det_ms = timing_metrics.get("detection_ms", 0.0)
+    emb_ms = timing_metrics.get("embedding_ms", 0.0)
+    db_lookup_ms = (t_db_end - t_db_start) * 1000
+    similarity_ms = (t_sim_end - t_sim_start) * 1000
+    auth_session_ms = (t_auth_end - t_auth_start) * 1000
+    total_backend_ms = (t_total_end - t_req_start) * 1000
+
+    logger.info(
+        "\n======================================================\n"
+        "[FACE AUTHENTICATION PERFORMANCE PROFILE]\n"
+        f"  User:                     {user.username} (ID: {user.id})\n"
+        f"  Mode:                     {'1:1 Verification' if identifier else '1:N Identification'}\n"
+        f"  Image Decode & Validate:  {decode_ms:.1f}ms\n"
+        f"  Face Detection:           {det_ms:.1f}ms\n"
+        f"  ArcFace Embedding:        {emb_ms:.1f}ms\n"
+        f"  Database Template Lookup: {db_lookup_ms:.1f}ms\n"
+        f"  Similarity Calculation:   {similarity_ms:.1f}ms (Score: {sim_result['similarity']:.4f}, Threshold: {sim_result['threshold']:.2f})\n"
+        f"  Django Authentication:    {auth_session_ms:.1f}ms\n"
+        "  ----------------------------------------------------\n"
+        f"  Total Backend Latency:    {total_backend_ms:.1f}ms\n"
+        "======================================================"
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Welcome back, {user.first_name or user.username}! Identity verified.",
+        "redirect_url": "/dashboard/",
+        "similarity": sim_result["similarity"],
+        "timings": {
+            "decode_ms": round(decode_ms, 1),
+            "detection_ms": round(det_ms, 1),
+            "embedding_ms": round(emb_ms, 1),
+            "db_lookup_ms": round(db_lookup_ms, 1),
+            "similarity_ms": round(similarity_ms, 1),
+            "auth_session_ms": round(auth_session_ms, 1),
+            "total_backend_ms": round(total_backend_ms, 1),
+        },
+    })
 
 
 def face_attendance_api(request):

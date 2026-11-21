@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 import base64
 import logging
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import numpy as np
 from django.conf import settings
 from django.utils.module_loading import import_string
@@ -152,6 +152,16 @@ class FaceStorageInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_all_active_templates(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve all active registered face templates.
+
+        Returns:
+            List[Dict[str, Any]]: List of dicts with 'user_id', 'embedding', and 'metadata'.
+        """
+        pass
+
     # =========================================================================
     # Application-Level Encryption Hooks
     # =========================================================================
@@ -246,6 +256,9 @@ class NotConfiguredFaceStorage(FaceStorageInterface):
     ) -> bool:
         raise StorageNotConfiguredError(self.ERROR_MESSAGE)
 
+    def get_all_active_templates(self) -> List[Dict[str, Any]]:
+        raise StorageNotConfiguredError(self.ERROR_MESSAGE)
+
 
 class InMemoryFaceStorage(FaceStorageInterface):
     """
@@ -333,6 +346,16 @@ class InMemoryFaceStorage(FaceStorageInterface):
         user_id: Union[int, str],
     ) -> bool:
         return self._key(user_id) in self._templates
+
+    def get_all_active_templates(self) -> List[Dict[str, Any]]:
+        results = []
+        for v in self._templates.values():
+            results.append({
+                "user_id": v["user_id"],
+                "embedding": np.copy(v["embedding"]),
+                "metadata": v.get("metadata", {}),
+            })
+        return results
 
     def clear(self):
         """Helper to clear test storage."""

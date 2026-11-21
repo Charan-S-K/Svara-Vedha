@@ -378,27 +378,17 @@
                 </div>
             </div>
 
-            <!-- 3. INFO ICON (System Diagnostics & Specs Modal) -->
+            <!-- 3. VOICE ANALYSIS (MICROPHONE) ICON -->
             <div class="relative nav-btn group">
-                <button onclick="openSystemDiagnostics()" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-6 active:scale-95 cursor-pointer" aria-label="Diagnostics &amp; Specs">
-                    <i data-lucide="info" class="w-5 h-5"></i>
-                </button>
+                <a href="{% url 'voice_record' %}" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50/60 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-md group-hover:shadow-brand-500/20 active:scale-95 cursor-pointer" aria-label="Voice Analysis">
+                    <i data-lucide="mic" class="w-5 h-5 text-brand-600 dark:text-brand-400 transition-transform duration-300 group-hover:-translate-y-0.5"></i>
+                </a>
                 <div class="nav-tooltip">
-                    Diagnostics &amp; Specs
+                    Voice Analysis
                 </div>
             </div>
 
-            <!-- 4. APPS / GRID ICON -->
-            <div class="relative nav-btn group">
-                <button onclick="showToast('Workspace Integrations: Google Meet, Zoom, Slack')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-6 active:scale-95 cursor-pointer" aria-label="Workspace Apps">
-                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                </button>
-                <div class="nav-tooltip">
-                    Workspace Apps
-                </div>
-            </div>
-
-            <!-- 5. SEARCH ICON -->
+            <!-- 4. SEARCH ICON -->
             <div class="relative nav-btn group">
                 <button onclick="showToast('Searching voice archives...')" class="nav-item-btn w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 active:scale-95 cursor-pointer" aria-label="Search Recordings">
                     <i data-lucide="search" class="w-5 h-5"></i>
@@ -549,6 +539,38 @@
                         <div class="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between">
                             <span class="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Tier</span>
                             <span class="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">PRO TIER (Demo / Preview)</span>
+                        </div>
+
+                        <!-- Face Authentication Status Row -->
+                        <div class="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Face Authentication</span>
+                                <span class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-0.5 flex items-center gap-1.5">
+                                    {% if has_face_id %}
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                        <span>Enrolled &amp; Active</span>
+                                    {% else %}
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                                        <span>Not Registered</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if not has_face_id %}
+                                <a href="{% url 'face_enroll' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 flex items-center gap-1">
+                                    <span>Add Face ID</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                </a>
+                            {% elif can_update_face %}
+                                <a href="{% url 'face_enroll' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 flex items-center gap-1">
+                                    <span>Update</span>
+                                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                                </a>
+                            {% else %}
+                                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1" title="Face ID can only be updated once per week. Available in {{ days_remaining }} day{{ days_remaining|pluralize }}.">
+                                    <i data-lucide="lock" class="w-3 h-3"></i>
+                                    <span>Locked ({{ days_remaining }}d)</span>
+                                </span>
+                            {% endif %}
                         </div>
 
                         <!-- Edit Profile Action Button -->
@@ -751,7 +773,95 @@
                         </form>
                     </div>
 
-                    <!-- SECTION 3: LINKED ACCOUNTS -->
+                    <!-- SECTION 3: BIOMETRIC FACE AUTHENTICATION -->
+                    <div class="pt-5 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <i data-lucide="scan-face" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+                                <span>Face Authentication</span>
+                            </h3>
+                            {% if has_face_id %}
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-700/60">
+                                    <i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300/60 dark:border-amber-700/60">
+                                    <i data-lucide="alert-circle" class="w-3 h-3 text-amber-500"></i>
+                                    Not Registered
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {% if not has_face_id %}
+                            <!-- State A: Face ID Not Registered -->
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                Face authentication is not yet registered for your account. Register your face to enable instant 1-click login and seamless biometric verification.
+                            </p>
+                            <a 
+                                href="{% url 'face_enroll' %}" 
+                                id="btnAddFaceAuth"
+                                class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 group"
+                            >
+                                <i data-lucide="user-plus" class="w-4 h-4 transition-transform group-hover:scale-110"></i>
+                                <span>Add Face Authentication</span>
+                            </a>
+                        {% else %}
+                            <!-- State B: Face ID Already Registered -->
+                            <div class="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/60 space-y-1.5 text-xs mb-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400 font-medium">Biometric Status</span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                                        Enrolled &amp; Active
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400 font-medium">Last Updated</span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ last_face_update|default:"Recently" }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400 font-medium">Update Frequency</span>
+                                    <span class="text-slate-600 dark:text-slate-300 font-medium">Once per week (7-day cooldown)</span>
+                                </div>
+                            </div>
+
+                            {% if can_update_face %}
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mb-2.5">
+                                    Your 7-day cooldown period has ended. You can update your registered Face ID anytime.
+                                </p>
+                                <a 
+                                    href="{% url 'face_enroll' %}" 
+                                    id="btnUpdateFaceId"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-[#090b1e] hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 group"
+                                >
+                                    <i data-lucide="refresh-cw" class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                                    <span>Update Face ID</span>
+                                </a>
+                            {% else %}
+                                <div class="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs mb-2.5 flex items-start gap-2">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"></i>
+                                    <div>
+                                        <span class="font-bold">Weekly Cooldown Active:</span>
+                                        <span>Face ID can only be updated once per week for security. Next update available in <span class="font-bold underline">{{ days_remaining }} day{{ days_remaining|pluralize }}</span> (Last updated: {{ last_face_update }}).</span>
+                                    </div>
+                                </div>
+                                <div class="relative cursor-not-allowed" onclick="showToast('Face ID updates are limited to once per week for security. You can update again in {{ days_remaining }} day{{ days_remaining|pluralize }}.')">
+                                    <button 
+                                        type="button" 
+                                        disabled
+                                        class="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm border border-slate-200/80 dark:border-slate-700/60 cursor-not-allowed flex items-center justify-center gap-2 select-none pointer-events-none"
+                                        title="Face ID can only be updated once per week. Available in {{ days_remaining }} day{{ days_remaining|pluralize }}."
+                                    >
+                                        <i data-lucide="lock" class="w-4 h-4"></i>
+                                        <span>Update Face ID (Available in {{ days_remaining }}d)</span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- SECTION 4: LINKED ACCOUNTS -->
                     <div class="pt-5 pb-5">
                         <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2.5">
                             Linked Accounts
@@ -791,7 +901,7 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 4: DELETE ACCOUNT (Red Danger Button) -->
+                    <!-- SECTION 5: DELETE ACCOUNT (Red Danger Button) -->
                     <div class="pt-2">
                         <button 
                             type="button" 

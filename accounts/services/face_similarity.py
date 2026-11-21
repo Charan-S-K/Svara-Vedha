@@ -22,7 +22,7 @@ Embeddings must be compared via vector dot product / cosine similarity.
 """
 
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import numpy as np
 from django.conf import settings
 
@@ -219,3 +219,75 @@ def verify_user_face(
     result = compare_face_embeddings(probe_embedding, stored_embedding, threshold=threshold)
     result["user_id"] = str(user_id)
     return result
+
+
+def identify_face_candidate(
+    probe_embedding: Any,
+    candidates: List[Dict[str, Any]],
+    threshold: Optional[float] = None,
+) -> Dict[str, Any]:
+    """
+    Search a pool of registered biometric face templates to identify a matching candidate.
+
+    Enforces strict security rules:
+    - Cosine similarity: dot(embedding_1, embedding_2) for normalized embeddings.
+    - Never accept a candidate whose similarity is below the threshold.
+    - If multiple registered users exist, identifies the highest genuine match.
+    - Ensures that a different person cannot be accepted merely because they are the highest score.
+    """
+    if threshold is None:
+        threshold = get_similarity_threshold()
+
+    if not candidates:
+        return {
+            "matched": False,
+            "user_id": None,
+            "similarity": 0.0,
+            "threshold": round(float(threshold), 4),
+            "message": "No registered face templates available for identification.",
+            "code": "no_templates",
+        }
+
+    target_dim = int(getattr(settings, "ARCFACE_EMBEDDING_DIM", EXPECTED_EMBEDDING_DIM))
+    probe_vec = validate_and_normalize_vector(probe_embedding, expected_dim=target_dim, name="Probe Embedding")
+
+    best_match: Optional[Dict[str, Any]] = None
+    best_sim: float = -1.0
+    second_sim: float = -1.0
+
+    for cand in candidates:
+        stored_raw = cand.get("embedding")
+        if stored_raw is None:
+            continue
+        try:
+            stored_vec = validate_and_normalize_vector(stored_raw, expected_dim=target_dim, name="Stored Candidate")
+            sim = float(np.dot(probe_vec, stored_vec))
+            sim = max(-1.0, min(1.0, sim))
+
+            if sim > best_sim:
+                second_sim = best_sim
+                best_sim = sim
+                best_match = cand
+            elif sim > second_sim:
+                second_sim = sim
+        except Exception:
+            continue
+
+    if best_match is None or best_sim < threshold:
+        return {
+            "matched": False,
+            "user_id": None,
+            "similarity": round(max(0.0, best_sim), 4),
+            "threshold": round(float(threshold), 4),
+            "message": "Face did not match any registered identity above the security threshold.",
+            "code": "face_mismatch",
+        }
+
+    return {
+        "matched": True,
+        "user_id": str(best_match.get("user_id")),
+        "similarity": round(float(best_sim), 4),
+        "threshold": round(float(threshold), 4),
+        "second_similarity": round(float(second_sim), 4) if second_sim > -1.0 else None,
+        "candidate": best_match,
+    }

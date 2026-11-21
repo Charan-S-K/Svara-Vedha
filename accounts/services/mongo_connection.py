@@ -64,14 +64,14 @@ def get_attendance_collection_name() -> str:
 
 
 def get_mongo_client(
-    timeout_ms: int = 5000,
+    timeout_ms: Optional[int] = None,
     force_new: bool = False,
 ) -> MongoClient:
     """
     Get or initialize the shared PyMongo MongoClient instance.
 
     Args:
-        timeout_ms: Server selection timeout in milliseconds (default 5000ms).
+        timeout_ms: Server selection timeout in milliseconds (default 15000ms or MONGODB_TIMEOUT_MS).
         force_new: If True, closes any existing client and creates a new one.
 
     Returns:
@@ -82,6 +82,12 @@ def get_mongo_client(
     """
     global _MONGO_CLIENT
 
+    if timeout_ms is None:
+        try:
+            timeout_ms = int(os.getenv("MONGODB_TIMEOUT_MS", "2500"))
+        except ValueError:
+            timeout_ms = 2500
+
     if force_new and _MONGO_CLIENT is not None:
         try:
             _MONGO_CLIENT.close()
@@ -90,7 +96,17 @@ def get_mongo_client(
         _MONGO_CLIENT = None
 
     if _MONGO_CLIENT is not None:
-        return _MONGO_CLIENT
+        # Verify connection health before reuse; if dropped or closed by Atlas, refresh
+        try:
+            _MONGO_CLIENT.admin.command("ping")
+            return _MONGO_CLIENT
+        except Exception as ping_err:
+            logger.info("Cached MongoDB client failed ping check, refreshing connection: %s", ping_err)
+            try:
+                _MONGO_CLIENT.close()
+            except Exception:
+                pass
+            _MONGO_CLIENT = None
 
     uri = get_mongo_uri()
     if not uri:
@@ -98,35 +114,33 @@ def get_mongo_client(
             "MONGODB_URI is not configured. Please set MONGODB_URI in your environment or .env file."
         )
 
+    client_kwargs = {
+        "serverSelectionTimeoutMS": timeout_ms,
+        "connectTimeoutMS": timeout_ms,
+        "socketTimeoutMS": max(timeout_ms, 5000),
+        "maxPoolSize": 50,
+        "minPoolSize": 0,
+        "retryWrites": True,
+        "appname": "SvaraabhavaFaceAuth",
+    }
     try:
-        client_kwargs = {
-            "serverSelectionTimeoutMS": timeout_ms,
-            "connectTimeoutMS": timeout_ms,
-            "socketTimeoutMS": 10000,
-            "maxPoolSize": 50,
-            "minPoolSize": 5,
-            "retryWrites": True,
-            "appname": "SvaraabhavaFaceAuth",
-        }
-        try:
-            import certifi
-            ca_path = certifi.where()
-            if os.path.exists(ca_path):
-                client_kwargs["tlsCAFile"] = ca_path
-        except ImportError:
-            pass
+        import certifi
+        ca_path = certifi.where()
+        if os.path.exists(ca_path):
+            client_kwargs["tlsCAFile"] = ca_path
+    except ImportError:
+        pass
 
-        # Initialize client with connection pooling and timeouts
+    # Connection attempt
+    try:
         client = MongoClient(uri, **client_kwargs)
-        # Test connection immediately
         client.admin.command("ping")
         _MONGO_CLIENT = client
         logger.info("Successfully connected to MongoDB Atlas.")
         return _MONGO_CLIENT
-
     except (ServerSelectionTimeoutError, ConnectionFailure) as e:
         err_msg = str(e)
-        logger.error("Failed to connect to MongoDB: %s", err_msg)
+        logger.warning("MongoDB connection failed: %s", err_msg)
         if "client" in locals():
             try:
                 client.close()
@@ -138,8 +152,12 @@ def get_mongo_client(
                 "Your IP address is not whitelisted in MongoDB Atlas Network Access. "
                 "Please add your current IP address (or 0.0.0.0/0) to the IP Access List in the MongoDB Atlas dashboard."
             ) from e
+        if "bad auth" in err_msg.lower() or "authentication failed" in err_msg.lower():
+            raise MongoConnectionError(
+                "MongoDB Atlas authentication failed. Please verify your MongoDB database username and password in .env."
+            ) from e
         raise MongoConnectionError(
-            f"Failed to connect to MongoDB server within {timeout_ms}ms. Verify MONGODB_URI, network, and IP access list."
+            f"Failed to connect to MongoDB server within {timeout_ms}ms. Verify MONGODB_URI, network connection, and MongoDB Atlas IP access list."
         ) from e
     except PyMongoError as e:
         logger.error("PyMongo error during client initialization: %s", str(e))
@@ -213,7 +231,7 @@ def close_mongo_connection() -> None:
             _MONGO_CLIENT = None
 
 
-def ping_mongo(timeout_ms: int = 3000) -> bool:
+def ping_mongo(timeout_ms: int = 10000) -> bool:
     """
     Ping MongoDB server to test connectivity.
 
