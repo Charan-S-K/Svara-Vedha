@@ -213,6 +213,8 @@ MONGODB_URI = os.getenv("MONGODB_URI", None)
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "svaraabhava_biometrics")
 MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION", "face_templates")
 MONGODB_ATTENDANCE_COLLECTION = os.getenv("MONGODB_ATTENDANCE_COLLECTION", "attendance_records")
+MONGODB_USER_DATABASE = os.getenv("MONGODB_USER_DATABASE", "user")
+MONGODB_USER_COLLECTION = os.getenv("MONGODB_USER_COLLECTION", "users")
 
 # Application-level Encryption Secret for Face Templates (Fernet 32-byte key)
 BIOMETRIC_ENCRYPTION_KEY = os.getenv("BIOMETRIC_ENCRYPTION_KEY", os.getenv("FACE_ENCRYPTION_KEY", None))

@@ -62,6 +62,12 @@ from .face_repository import (
     InactiveTemplateError,
     get_biometric_cipher,
 )
+from .user_sync import (
+    sync_user_to_mongo,
+    sync_all_existing_users,
+    get_synced_mongo_users,
+    get_user_sync_collection,
+)
 
 __all__ = [
     "FaceValidationError",
@@ -108,4 +114,8 @@ __all__ = [
     "TemplateNotFoundError",
     "InactiveTemplateError",
     "get_biometric_cipher",
+    "sync_user_to_mongo",
+    "sync_all_existing_users",
+    "get_synced_mongo_users",
+    "get_user_sync_collection",
 ]

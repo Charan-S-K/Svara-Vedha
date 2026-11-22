@@ -181,6 +181,16 @@ def verify_otp(request):
                 phone=phone
             )
 
+            # Additional MongoDB synchronization (PostgreSQL -> MongoDB user.users)
+            try:
+                from accounts.services.user_sync import sync_user_to_mongo
+                sync_user_to_mongo(user_id=user.id, name=name)
+            except Exception as sync_err:
+                logger.error(
+                    "Non-blocking MongoDB user sync error on registration for user %s: %s",
+                    user.id, sync_err
+                )
+
             # Clear registration session
             request.session.pop(
                 "register_name",
