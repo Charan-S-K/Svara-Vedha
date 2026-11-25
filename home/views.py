@@ -169,3 +169,74 @@ def resend(request):
     messages.success(request,"A new OTP has been sent to your email.")
 
     return redirect("/verify-otp/")
+
+
+def timetable_api(request):
+    """
+    Weekly Academic Timetable API endpoint for MongoDB persistence.
+    GET: Retrieve current user's timetable document.
+    POST / PUT: Upsert current user's timetable document.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": "error",
+            "message": "Authentication required. Please log in."
+        }, status=401)
+
+    user = request.user
+    user_name = (user.get_full_name() or user.username or "Student").strip()
+
+    if request.method == "GET":
+        from .services.timetable_service import get_user_timetable
+        res = get_user_timetable(user.id, user_name)
+        return JsonResponse(res)
+
+    elif request.method in ["POST", "PUT"]:
+        import json
+        from .services.timetable_service import validate_timetable_payload, save_user_timetable
+
+        try:
+            body = json.loads(request.body.decode("utf-8"))
+        except Exception:
+            return JsonResponse({
+                "status": "error",
+                "message": "Invalid JSON payload."
+            }, status=400)
+
+        is_valid, err_msg, cleaned_data = validate_timetable_payload(body)
+        if not is_valid:
+            return JsonResponse({
+                "status": "error",
+                "message": err_msg
+            }, status=400)
+
+        res = save_user_timetable(user.id, user_name, cleaned_data)
+        return JsonResponse(res)
+
+    return JsonResponse({
+        "status": "error",
+        "message": f"Method '{request.method}' not allowed."
+    }, status=405)
+
+
+def download_project_zip(request):
+    """Serve the generated Voice_Ai.zip archive directly to the browser."""
+    import os
+    from django.http import FileResponse, Http404
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    zip_path = os.path.join(base_dir, "Voice_Ai.zip")
+
+    if not os.path.exists(zip_path):
+        # Fallback to parent dir
+        parent_zip = os.path.join(os.path.dirname(base_dir), "Voice_Ai.zip")
+        if os.path.exists(parent_zip):
+            zip_path = parent_zip
+        else:
+            raise Http404("Voice_Ai.zip archive not found.")
+
+    response = FileResponse(open(zip_path, "rb"), as_attachment=True, filename="Voice_Ai.zip")
+    response["Content-Type"] = "application/zip"
+    return response
+
+

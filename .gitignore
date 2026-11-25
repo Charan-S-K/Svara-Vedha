@@ -4,6 +4,7 @@ __pycache__/
 *.joblib
 .DS_Store
 db.sqlite3
+*.sqlite3
 media/
 .venv
 models/

@@ -585,6 +585,36 @@
                                 <span>Edit Profile</span>
                             </button>
                         </div>
+
+                        <!-- Add Time Table Action Card -->
+                        <div class="pt-3">
+                            <a 
+                                href="javascript:void(0)"
+                                onclick="openTimeTableModal()"
+                                id="cardAddTimeTable"
+                                class="group w-full p-4 rounded-2xl bg-[#21212b] hover:bg-[#282836] border border-slate-700/80 hover:border-brand-400/80 shadow-md hover:shadow-xl transition-all duration-200 flex items-center justify-between gap-3.5 cursor-pointer text-left transform active:scale-[0.99] block"
+                            >
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <!-- Light Lilac Rounded Badge matching Image -->
+                                    <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#f0eafe] flex items-center justify-center text-[#7c3aed] flex-shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+                                        <i data-lucide="calendar-plus" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
+                                    </div>
+                                    <!-- Title & Subtitle matching Image -->
+                                    <div class="min-w-0">
+                                        <h4 class="text-sm sm:text-base font-bold text-white tracking-tight group-hover:text-brand-300 transition-colors">
+                                            Time Table
+                                        </h4>
+                                        <p class="text-xs sm:text-[13px] text-slate-300/90 dark:text-slate-400 mt-1 line-clamp-1">
+                                            Upload and manage your academic timetable
+                                        </p>
+                                    </div>
+                                </div>
+                                <!-- Right Arrow Icon on the right -->
+                                <div class="flex items-center text-slate-400 group-hover:text-white group-hover:translate-x-1.5 transition-all flex-shrink-0 pr-1">
+                                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                                </div>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- 2. Editable Form State (Displayed on Demand) -->
@@ -1119,6 +1149,291 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: ACADEMIC TIMETABLE INTERFACE ==================== -->
+    <div id="timeTableModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-md">
+        <div id="timetableModalCard" class="w-full max-w-xl rounded-[26px] p-5 sm:p-7 shadow-2xl bg-[#131622] border border-slate-700/80 animate-slide-up relative max-h-[94vh] overflow-y-auto text-slate-100 transition-all duration-300">
+            
+            <!-- ================= VIEW 1: OPTIONS (Add Time Table vs Edit Time Table) ================= -->
+            <div id="timetableOptionsView" class="space-y-4">
+                <!-- Modal Header matching screenshot -->
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="calendar" class="w-6 h-6 text-[#c084fc] stroke-[2.2]"></i>
+                            <h3 class="font-heading font-extrabold text-lg sm:text-xl text-white tracking-tight">Academic Timetable</h3>
+                        </div>
+                        <p class="text-xs sm:text-[13px] text-slate-300/85 mt-2">
+                            Choose what you want to do with your academic timetable.
+                        </p>
+                    </div>
+                    <button onclick="closeTimeTableModal()" class="w-8 h-8 rounded-full hover:bg-slate-800/80 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors" title="Close">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Two Vertical Cards navigating to the Blank Timetable -->
+                <div class="pt-2 space-y-3.5">
+                    <!-- Option 1: Add Time Table -->
+                    <div 
+                        onclick="navigateToTimetableStep('timetable', 'add')"
+                        id="optionCardAddTimeTable"
+                        class="group w-full p-4 sm:p-4.5 rounded-2xl bg-[#24242e] hover:bg-[#2b2b38] border border-slate-700/70 hover:border-purple-500/80 shadow-md hover:shadow-xl transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer text-left transform active:scale-[0.99]"
+                    >
+                        <div class="flex items-center gap-4 min-w-0">
+                            <!-- Rounded lilac icon badge -->
+                            <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#f0eafe] flex items-center justify-center text-[#7c3aed] flex-shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+                                <i data-lucide="calendar-plus" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
+                            </div>
+                            <!-- Title & Subtitle -->
+                            <div class="min-w-0">
+                                <h4 class="text-base sm:text-lg font-bold text-white tracking-tight group-hover:text-purple-300 transition-colors">
+                                    Add Time Table
+                                </h4>
+                                <p class="text-xs sm:text-[13px] text-slate-300/90 mt-1">
+                                    Create and add your academic timetable.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Purple right arrow -->
+                        <div class="flex items-center text-purple-400 group-hover:text-purple-300 group-hover:translate-x-1.5 transition-all flex-shrink-0 pr-1">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Edit Time Table -->
+                    <div 
+                        onclick="navigateToTimetableStep('timetable', 'edit')"
+                        id="optionCardEditTimeTable"
+                        class="group w-full p-4 sm:p-4.5 rounded-2xl bg-[#24242e] hover:bg-[#2b2b38] border border-slate-700/70 hover:border-purple-500/80 shadow-md hover:shadow-xl transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer text-left transform active:scale-[0.99]"
+                    >
+                        <div class="flex items-center gap-4 min-w-0">
+                            <!-- Rounded lilac icon badge -->
+                            <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#f0eafe] flex items-center justify-center text-[#7c3aed] flex-shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+                                <i data-lucide="calendar-check" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
+                            </div>
+                            <!-- Title & Subtitle -->
+                            <div class="min-w-0">
+                                <h4 class="text-base sm:text-lg font-bold text-white tracking-tight group-hover:text-purple-300 transition-colors">
+                                    Edit Time Table
+                                </h4>
+                                <p class="text-xs sm:text-[13px] text-slate-300/90 mt-1">
+                                    View and modify your existing academic timetable.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Purple right arrow -->
+                        <div class="flex items-center text-purple-400 group-hover:text-purple-300 group-hover:translate-x-1.5 transition-all flex-shrink-0 pr-1">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 2: BLANK WEEKLY TIMETABLE INTERFACE ================= -->
+            <div id="timetableBlankView" class="hidden space-y-4">
+                <!-- Navigation Bar with Back Button & Close -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-700/60">
+                    <button 
+                        type="button" 
+                        onclick="navigateToTimetableStep('options')"
+                        class="flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer group"
+                    >
+                        <i data-lucide="chevron-left" class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"></i>
+                        <span>Back to Options</span>
+                    </button>
+                    <span class="text-[11px] uppercase font-bold tracking-widest text-slate-400 hidden sm:inline-block">
+                        Weekly Academic Timetable
+                    </span>
+                    <button onclick="closeTimeTableModal()" class="w-8 h-8 rounded-full hover:bg-slate-800/80 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors" title="Close">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Schedule Section Title matching reference image -->
+                <div class="flex items-center justify-between pt-1">
+                    <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">Schedule</h2>
+                    <span class="text-[11px] text-slate-400">Blank Grid &bull; Mon &ndash; Sat</span>
+                </div>
+
+                <!-- Blank Timetable Grid (Matching Reference Screenshot) -->
+                <div class="overflow-x-auto rounded-xl border border-[#21273d] bg-[#0c0e18] shadow-2xl">
+                    <table class="w-full min-w-[880px] border-collapse text-center">
+                        <thead>
+                            <!-- Time Slot Header Row -->
+                            <tr class="border-b border-[#21273d] bg-[#0f1220]">
+                                <th class="p-3 w-20 sm:w-24 text-left font-bold text-slate-400 text-xs border-r border-[#21273d]">
+                                    Day
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    9:00 - 9:55
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    10:00 - 10:50
+                                </th>
+                                <!-- Short Break Header Column -->
+                                <th class="py-3 px-1.5 font-medium text-slate-400 text-[10px] sm:text-[11px] border-r border-[#21273d] w-14 sm:w-16">
+                                    10:50 - 11:10
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    11:10 - 12:05
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    12:05 - 1:00
+                                </th>
+                                <!-- Lunch Break Header Column -->
+                                <th class="py-3 px-1.5 font-medium text-slate-400 text-[10px] sm:text-[11px] border-r border-[#21273d] w-14 sm:w-16">
+                                    1:00 - 1:45
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    1:45 - 2:45
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs border-r border-[#21273d] min-w-[85px]">
+                                    2:45 - 3:45
+                                </th>
+                                <th class="py-3 px-2 font-medium text-slate-400 text-[11px] sm:text-xs min-w-[85px]">
+                                    3:45 - 4:45
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="timetableBody">
+                            <!-- Row 1: MONDAY (Contains rowspan=6 for Short Break & Lunch Break) -->
+                            <tr class="border-b border-[#21273d] h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    MON
+                                </td>
+                                <!-- 9:00 - 9:55 -> Period 1 -->
+                                <td data-day="MON" data-period="1" data-slot-key="MON_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <!-- 10:00 - 10:50 -> Period 2 -->
+                                <td data-day="MON" data-period="2" data-slot-key="MON_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                
+                                <!-- Vertically Merged Column 1: Short Break spanning all 6 rows -->
+                                <td rowspan="6" class="border-r border-[#21273d] bg-[#121626] text-white font-extrabold text-xs sm:text-sm select-none align-middle text-center p-0">
+                                    <div class="flex flex-col items-center justify-center font-black tracking-widest text-slate-100 text-xs sm:text-sm py-4 space-y-1">
+                                        <span>S</span><span>H</span><span>O</span><span>R</span><span>T</span>
+                                        <span class="h-4"></span>
+                                        <span>B</span><span>R</span><span>E</span><span>A</span><span>K</span>
+                                    </div>
+                                </td>
+
+                                <!-- 11:10 - 12:05 -> Period 3 -->
+                                <td data-day="MON" data-period="3" data-slot-key="MON_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+
+                                <!-- 12:05 - 1:00 -> Period 4 -->
+                                <td data-day="MON" data-period="4" data-slot-key="MON_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+
+                                <!-- Vertically Merged Column 2: Lunch Break spanning all 6 rows (1:00 - 1:45) -->
+                                <td rowspan="6" class="border-r border-[#21273d] bg-[#121626] text-white font-extrabold text-xs sm:text-sm select-none align-middle text-center p-0">
+                                    <div class="flex flex-col items-center justify-center font-black tracking-widest text-slate-100 text-xs sm:text-sm py-4 space-y-1">
+                                        <span>L</span><span>U</span><span>N</span><span>C</span><span>H</span>
+                                        <span class="h-4"></span>
+                                        <span>B</span><span>R</span><span>E</span><span>A</span><span>K</span>
+                                    </div>
+                                </td>
+
+                                <!-- 1:45 - 2:45 -> Period 5 -->
+                                <td data-day="MON" data-period="5" data-slot-key="MON_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <!-- 2:45 - 3:45 -> Period 6 -->
+                                <td data-day="MON" data-period="6" data-slot-key="MON_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <!-- 3:45 - 4:45 -> Period 7 -->
+                                <td data-day="MON" data-period="7" data-slot-key="MON_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+
+                            <!-- Row 2: TUESDAY -->
+                            <tr class="border-b border-[#21273d] h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    TUE
+                                </td>
+                                <td data-day="TUE" data-period="1" data-slot-key="TUE_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="2" data-slot-key="TUE_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="3" data-slot-key="TUE_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="4" data-slot-key="TUE_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="5" data-slot-key="TUE_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="6" data-slot-key="TUE_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="TUE" data-period="7" data-slot-key="TUE_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+
+                            <!-- Row 3: WEDNESDAY -->
+                            <tr class="border-b border-[#21273d] h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    WED
+                                </td>
+                                <td data-day="WED" data-period="1" data-slot-key="WED_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="2" data-slot-key="WED_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="3" data-slot-key="WED_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="4" data-slot-key="WED_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="5" data-slot-key="WED_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="6" data-slot-key="WED_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="WED" data-period="7" data-slot-key="WED_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+
+                            <!-- Row 4: THURSDAY -->
+                            <tr class="border-b border-[#21273d] h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    THU
+                                </td>
+                                <td data-day="THU" data-period="1" data-slot-key="THU_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="2" data-slot-key="THU_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="3" data-slot-key="THU_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="4" data-slot-key="THU_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="5" data-slot-key="THU_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="6" data-slot-key="THU_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="THU" data-period="7" data-slot-key="THU_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+
+                            <!-- Row 5: FRIDAY -->
+                            <tr class="border-b border-[#21273d] h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    FRI
+                                </td>
+                                <td data-day="FRI" data-period="1" data-slot-key="FRI_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="2" data-slot-key="FRI_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="3" data-slot-key="FRI_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="4" data-slot-key="FRI_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="5" data-slot-key="FRI_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="6" data-slot-key="FRI_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="FRI" data-period="7" data-slot-key="FRI_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+
+                            <!-- Row 6: SATURDAY -->
+                            <tr class="h-14 sm:h-16">
+                                <td class="font-extrabold text-white text-sm sm:text-base tracking-wider border-r border-[#21273d] bg-[#101322]">
+                                    SAT
+                                </td>
+                                <td data-day="SAT" data-period="1" data-slot-key="SAT_1" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="2" data-slot-key="SAT_2" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="3" data-slot-key="SAT_3" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="4" data-slot-key="SAT_4" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="5" data-slot-key="SAT_5" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="6" data-slot-key="SAT_6" class="timetable-slot-cell border-r border-[#21273d] bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                                <td data-day="SAT" data-period="7" data-slot-key="SAT_7" class="timetable-slot-cell bg-[#0c0e18] hover:bg-slate-800/40 transition-all duration-150 cursor-pointer select-none text-center align-middle p-0"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="flex items-center justify-between pt-2">
+                    <button 
+                        type="button" 
+                        onclick="navigateToTimetableStep('options')"
+                        class="py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                        &larr; Back to Options
+                    </button>
+                    <button 
+                        type="button" 
+                        id="btnTimetableDone"
+                        onclick="handleTimetableDone()"
+                        class="py-2.5 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                    >
+                        Done
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- ==================== TOAST NOTIFICATION BANNER ==================== -->
     <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
         <div class="px-5 py-3 rounded-2xl bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 text-xs font-semibold shadow-2xl backdrop-blur-xl border border-white/10 dark:border-slate-200 flex items-center gap-2.5">
@@ -1544,12 +1859,258 @@
             document.getElementById('diagnosticsModal').classList.add('hidden');
         }
 
+        /* ================= TIMETABLE SELECTION STATE (React-style useState) ================= */
+        // Day key mappings matching MongoDB document schema
+        const TIMETABLE_DAY_MAP = {
+            'mon': 'MON',
+            'tues': 'TUE',
+            'wed': 'WED',
+            'thurs': 'THU',
+            'fri': 'FRI',
+            'sat': 'SAT'
+        };
+
+        const TIMETABLE_REVERSE_DAY_MAP = {
+            'MON': 'mon',
+            'TUE': 'tues',
+            'WED': 'wed',
+            'THU': 'thurs',
+            'FRI': 'fri',
+            'SAT': 'sat'
+        };
+
+        // React-style useState hook to manage selected slot keys
+        const [getSelectedSlots, setSelectedSlots] = (function createTimetableSlotState() {
+            let state = new Set();
+            return [
+                () => state,
+                (updater) => {
+                    const nextState = typeof updater === 'function' ? updater(new Set(state)) : new Set(updater);
+                    state = nextState;
+                    syncTimetableCellUI();
+                }
+            ];
+        })();
+
+        // Generic click handler for every timetable cell
+        function handleTimetableCellClick(e) {
+            const cell = e.target.closest('.timetable-slot-cell');
+            if (!cell) return;
+            const slotKey = cell.getAttribute('data-slot-key');
+            if (!slotKey) return;
+
+            setSelectedSlots(prevSlots => {
+                const nextSlots = new Set(prevSlots);
+                if (nextSlots.has(slotKey)) {
+                    nextSlots.delete(slotKey);
+                } else {
+                    nextSlots.add(slotKey);
+                }
+                return nextSlots;
+            });
+        }
+
+        // Synchronize visual state of all cells dynamically
+        function syncTimetableCellUI() {
+            const selected = getSelectedSlots();
+            const cells = document.querySelectorAll('.timetable-slot-cell');
+            cells.forEach(cell => {
+                const key = cell.getAttribute('data-slot-key');
+                const isSelected = selected.has(key);
+
+                if (isSelected) {
+                    cell.classList.add('bg-emerald-950/50', 'ring-1', 'ring-inset', 'ring-emerald-400/60');
+                    cell.classList.remove('bg-[#0c0e18]');
+                    cell.innerHTML = `
+                        <div class="flex items-center justify-center w-full h-full pointer-events-none transition-transform duration-150 transform scale-100">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-400 stroke-[3]"></i>
+                        </div>
+                    `;
+                } else {
+                    cell.classList.remove('bg-emerald-950/50', 'ring-1', 'ring-inset', 'ring-emerald-400/60');
+                    cell.classList.add('bg-[#0c0e18]');
+                    cell.innerHTML = '';
+                }
+            });
+            lucide.createIcons();
+        }
+
+        // Retrieve CSRF token from page
+        function getCsrfToken() {
+            const input = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (input && input.value) return input.value;
+            const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            return cookie ? cookie.split('=')[1] : '';
+        }
+
+        // Fetch existing timetable document for current user
+        let isTimetableLoaded = false;
+        async function loadUserTimetable(force = false) {
+            if (isTimetableLoaded && !force) return;
+            try {
+                const resp = await fetch('/dashboard/api/timetable/');
+                if (!resp.ok) return;
+                const result = await resp.json();
+                if (result.status === 'success' && result.data) {
+                    const data = result.data;
+                    const loadedSlots = new Set();
+                    Object.keys(TIMETABLE_DAY_MAP).forEach(dayKey => {
+                        const dayAbbr = TIMETABLE_DAY_MAP[dayKey];
+                        const periods = data[dayKey] || [];
+                        periods.forEach(p => {
+                            loadedSlots.add(`${dayAbbr}_${p}`);
+                        });
+                    });
+                    setSelectedSlots(loadedSlots);
+                    isTimetableLoaded = true;
+                }
+            } catch (err) {
+                console.warn("Could not fetch user timetable from server:", err);
+            }
+        }
+
+        // Save timetable to backend MongoDB when Done is clicked
+        async function handleTimetableDone() {
+            const doneBtn = document.getElementById('btnTimetableDone');
+            const originalHtml = doneBtn ? doneBtn.innerHTML : 'Done';
+            if (doneBtn) {
+                doneBtn.disabled = true;
+                doneBtn.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        Saving...
+                    </span>
+                `;
+            }
+
+            // 1. Collect selected periods for each day
+            const payload = {
+                mon: [],
+                tues: [],
+                wed: [],
+                thurs: [],
+                fri: [],
+                sat: []
+            };
+
+            const selected = getSelectedSlots();
+            selected.forEach(slotKey => {
+                const parts = slotKey.split('_');
+                if (parts.length === 2) {
+                    const dayAbbr = parts[0];
+                    const periodNum = parseInt(parts[1], 10);
+                    const dayKey = TIMETABLE_REVERSE_DAY_MAP[dayAbbr];
+                    if (dayKey && !isNaN(periodNum) && Array.isArray(payload[dayKey])) {
+                        if (!payload[dayKey].includes(periodNum)) {
+                            payload[dayKey].push(periodNum);
+                        }
+                    }
+                }
+            });
+
+            // 2. Sort each day array in ascending order
+            Object.keys(payload).forEach(dayKey => {
+                payload[dayKey].sort((a, b) => a - b);
+            });
+
+            try {
+                const csrfToken = getCsrfToken();
+                const resp = await fetch('/dashboard/api/timetable/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await resp.json();
+                if (resp.ok && res.status === 'success') {
+                    closeTimeTableModal();
+                    showToast(res.message || "Timetable saved successfully!");
+                } else {
+                    showToast(res.message || "Failed to save timetable.");
+                }
+            } catch (e) {
+                showToast("Connection error while saving timetable.");
+            } finally {
+                if (doneBtn) {
+                    doneBtn.disabled = false;
+                    doneBtn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        /* ================= TIMETABLE MODAL CONTROLS ================= */
+        function openTimeTableModal() {
+            setSelectedSlots(new Set());
+            navigateToTimetableStep('options');
+            const modal = document.getElementById('timeTableModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                lucide.createIcons();
+            }
+        }
+
+        function closeTimeTableModal() {
+            const modal = document.getElementById('timeTableModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function navigateToTimetableStep(step, mode = 'view') {
+            const modalCard = document.getElementById('timetableModalCard');
+            const optionsView = document.getElementById('timetableOptionsView');
+            const blankView = document.getElementById('timetableBlankView');
+
+            if (!optionsView || !blankView) return;
+
+            if (step === 'timetable') {
+                optionsView.classList.add('hidden');
+                blankView.classList.remove('hidden');
+                if (modalCard) {
+                    modalCard.classList.remove('max-w-xl');
+                    modalCard.classList.add('max-w-5xl', 'lg:max-w-6xl');
+                }
+                if (mode === 'add') {
+                    // "Add Time Table" must strictly start with a blank grid, waiting for user entries!
+                    setSelectedSlots(new Set());
+                } else if (mode === 'edit') {
+                    // "Edit Time Table" loads existing saved user slots, or empty if none
+                    loadUserTimetable(true).then(() => syncTimetableCellUI());
+                } else {
+                    syncTimetableCellUI();
+                }
+            } else {
+                blankView.classList.add('hidden');
+                optionsView.classList.remove('hidden');
+                if (modalCard) {
+                    modalCard.classList.remove('max-w-5xl', 'lg:max-w-6xl');
+                    modalCard.classList.add('max-w-xl');
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // Initialize Timetable slot event delegation
+        document.addEventListener('DOMContentLoaded', () => {
+            const timetableBody = document.getElementById('timetableBody');
+            if (timetableBody) {
+                timetableBody.addEventListener('click', handleTimetableCellClick);
+            }
+        });
+
         // Close modals on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeSubscriptionModal();
                 closeDeleteAccountModal();
                 closeSystemDiagnostics();
+                closeTimeTableModal();
                 closeProfileDropdown();
             }
         });

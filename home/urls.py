@@ -14,4 +14,14 @@ path(
     views.verify_password_otp,
     name="verify_password_otp"
 ),
+path(
+    "api/timetable/",
+    views.timetable_api,
+    name="timetable_api"
+),
+path(
+    "download-zip/",
+    views.download_project_zip,
+    name="download_project_zip"
+),
 ]
